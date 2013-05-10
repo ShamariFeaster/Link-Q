@@ -1,0 +1,33 @@
+{
+  "name": "Link-Q",
+  "description": "Creates queue of links to check out later. No bookmarks. No Tabs",
+  "version": "0.3",
+  "icons" : {"16": "icon-16.png",
+			"48": "icon-48.png",
+			"128": "icon-128.png" },
+  "browser_action": {
+    "default_icon": "icon-ba.png"
+	},
+  "permissions": ["contextMenus", "tabs"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "commands": {
+    "queue-forward": {
+      "suggested_key": { "default": "Ctrl+Shift+F" },
+      "description": "Load Next Page In Queue"
+    },
+	"hover-add": {
+      "suggested_key": { "default": "Ctrl+Shift+Q" },
+      "description": "Add Link You're Hovering Over To Queue"
+    }
+  },"content_scripts": [
+    {
+      "matches": ["http://*/*"],
+      "js": ["jquery.js","core.js"],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
+  "manifest_version": 2
+}
