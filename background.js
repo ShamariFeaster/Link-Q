@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener(
 		_hovering = request.hovering;
 		_contentScriptURL = request.hoverURL;
 		_contentScriptText = request.linkText;
-		//sendResponse({response: "Hover URL Received"});
+		sendResponse({response: "Hover URL Received"});
   });
 
 function /*Queue Object*/removeFromQueue(url){

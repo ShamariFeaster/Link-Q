@@ -1,7 +1,7 @@
 {
   "name": "Link-Q",
   "description": "Creates queue of links to check out later. No bookmarks. No Tabs",
-  "version": "0.3",
+  "version": "0.4",
   "icons" : {"16": "icon-16.png",
 			"48": "icon-48.png",
 			"128": "icon-128.png" },
@@ -18,7 +18,7 @@
       "description": "Load Next Page In Queue"
     },
 	"hover-add": {
-      "suggested_key": { "default": "Ctrl+Shift+Q" },
+      "suggested_key": { "default": "Ctrl+Shift+A" },
       "description": "Add Link You're Hovering Over To Queue"
     }
   },"content_scripts": [
