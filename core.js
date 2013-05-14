@@ -4,7 +4,7 @@ $(function(){
 		function(){
 			console.log(this.href);
 			chrome.runtime.sendMessage({hoverURL: this.href, linkText: $(this).text(), hovering: true}, function(response) {
-				//console.log(response.response);
+				console.log('hovering');
 			});
 			
 		}
@@ -12,7 +12,7 @@ $(function(){
 		//out
 		,function(){
 			chrome.runtime.sendMessage({hoverURL: this.href, linkText: $(this).text(), hovering: false}, function(response) {
-				//console.log(response.response);
+				console.log('not hovering');
 			});
 		});
 

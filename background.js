@@ -22,7 +22,7 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	//console.log('url: '+info.linkUrl );
 	var text = info.selectionText;
 	var url = info.linkUrl;
-
+  //you can select the text of a link but this is obsolete and should be removed
 	if(typeof info.selectionText != 'undefined') {
 		_pages.push({'text' : text, 'url' : url});
 
@@ -46,8 +46,17 @@ chrome.commands.onCommand.addListener(function(command) {
 		}
 
 		if (command == "queue-forward") {
-			if(_pages.length > 0) {
-				var currentQueueItem = _pages.splice(0,1)[0]; //pop off the front
+			openLink( _pages.splice(0,1)[0] , false);  //pop off the front
+	  }
+	  
+		
+  
+});
+
+
+function openLink(queueObj, openIfEmpty){
+  if(_pages.length > 0 || openIfEmpty) {
+				var currentQueueItem = queueObj;
 				var numTabs = 0;
 				if(_tabId == null) {
 					chrome.tabs.create({url : currentQueueItem.url}, function(tab){
@@ -75,11 +84,9 @@ chrome.commands.onCommand.addListener(function(command) {
 				if(_tabOpen)
 					chrome.tabs.remove(_tabId);
 			}
-	  }
-	  
-		
   
-});
+  }
+
 //Tab Closed Listener
 chrome.tabs.onRemoved.addListener(
 	function( closedTabId , removeInfo){
@@ -100,12 +107,16 @@ chrome.runtime.onMessage.addListener(
 
 function /*Queue Object*/removeFromQueue(url){
 	var tempArr = Array();
+  var queueObj = null;
 	for(var i = 0; i < _pages.length; i++){
 		if(_pages[i].url != url) {
 			tempArr.push(_pages[i]);
-		}
+		} else {
+      queueObj = _pages[i];
+      }
 	}
-	return tempArr;
+	_pages = tempArr;
+  return queueObj;
 
 }
 

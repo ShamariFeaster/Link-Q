@@ -1,14 +1,15 @@
 {
   "name": "Link-Q",
   "description": "Creates queue of links to check out later. No bookmarks. No Tabs",
-  "version": "0.6",
+  "version": "0.7",
   "icons" : {"16": "icon-16.png",
 			"48": "icon-48.png",
 			"128": "icon-128.png" },
-  "browser_action": {
-    "default_icon": "icon-ba.png"
-	},
   "permissions": ["contextMenus", "tabs"],
+  "browser_action": {
+    "default_icon": "icon-ba.png",
+    "default_popup": "popup.html"
+  },
   "background": {
     "scripts": ["background.js"]
   },
