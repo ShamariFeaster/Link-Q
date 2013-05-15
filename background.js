@@ -46,44 +46,49 @@ chrome.commands.onCommand.addListener(function(command) {
 		}
 
 		if (command == "queue-forward") {
-			openLink( _pages.splice(0,1)[0] , false);  //pop off the front
-	  }
-	  
-		
-  
+			openLink( _pages, false);  //pop off the front
+	  } 
 });
 
 
 function openLink(queueObj, openIfEmpty){
-  if(_pages.length > 0 || openIfEmpty) {
-				var currentQueueItem = queueObj;
-				var numTabs = 0;
-				if(_tabId == null) {
-					chrome.tabs.create({url : currentQueueItem.url}, function(tab){
-						_tabId = tab.id;
-						_tabOpen = true;
-						_tab = tab;
-						chrome.tabs.move(_tabId, {index: -1});
-						//console.log('creating new tab. tab position: ' +  _tab.index);
-					});
-					
-				} else if(_tabOpen){
-					//console.log('tab is active');
-					chrome.tabs.update(_tabId, {url: currentQueueItem.url});
-					
-				} else if(!_tabOpen){
-					chrome.tabs.create({url : currentQueueItem.url, index : numTabs}, function(tab){
-						_tabId = tab.id;
-						_tabOpen = true;
-						_tab = tab;
-						chrome.tabs.move(_tabId, {index: -1});
-					});
-				}
-	  
-			} else {
-				if(_tabOpen)
-					chrome.tabs.remove(_tabId);
-			}
+	console.log('pages  length: '+_pages.length);
+	var currentQueueItem;
+    if(_pages.length > 0 || openIfEmpty) {
+		if(Array.isArray(queueObj)) { //if _pages is passed pop off front
+			currentQueueItem = queueObj.splice(0,1)[0];
+		} else{ //else we know the object has already been popped off _pages
+			currentQueueItem = queueObj;
+		}
+		
+		var numTabs = 0;
+		if(_tabId == null) {
+			chrome.tabs.create({url : currentQueueItem.url}, function(tab){
+				_tabId = tab.id;
+				_tabOpen = true;
+				_tab = tab;
+				chrome.tabs.move(_tabId, {index: -1});
+				console.log('creating new tab. tab position: ' +  _tab.index);
+			});
+			
+		} else if(_tabOpen){
+			console.log('tab is active');
+			chrome.tabs.update(_tabId, {url: currentQueueItem.url});
+			
+		} else if(!_tabOpen){
+			chrome.tabs.create({url : currentQueueItem.url, index : numTabs}, function(tab){
+				_tabId = tab.id;
+				_tabOpen = true;
+				_tab = tab;
+				chrome.tabs.move(_tabId, {index: -1});
+			});
+		}
+
+	} else {
+		if(_tabOpen)
+			chrome.tabs.remove(_tabId);
+			console.log('if failed, removing tab');
+	}
   
   }
 
