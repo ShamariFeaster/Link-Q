@@ -29,11 +29,14 @@ $(function(){
     
     $('button').click(function(e){
       var id = $(this).attr('id');
-      _bg.openLink( _bg.removeFromQueue(id) , true);
+	  _bg.lastUrl = id;
+      _bg.openLink( _bg.getFromQueue(id) , true);
+	  /*
       $(this).hide( "slide", {percent: 0}, 375, function(){
           if(_bg._pages.length < 1)
             window.close();
         });
+		*/
       
       });
     

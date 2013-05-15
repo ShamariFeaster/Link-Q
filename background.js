@@ -14,6 +14,9 @@ var _tabOpen = false;
 var _hovering = false;
 var _contentScriptURL = "";
 var _contentScriptText = "";
+
+var _currentUrl = ""; //for saving state
+var _lastUrl = "";
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
                                        "id": "Link-Q"});
@@ -46,6 +49,8 @@ chrome.commands.onCommand.addListener(function(command) {
 		}
 
 		if (command == "queue-forward") {
+			_lastUrl = _currentUrl;
+			removeFromQueue(_currentUrl);
 			openLink( _pages, false);  //pop off the front
 	  } 
 });
@@ -56,11 +61,11 @@ function openLink(queueObj, openIfEmpty){
 	var currentQueueItem;
     if(_pages.length > 0 || openIfEmpty) {
 		if(Array.isArray(queueObj)) { //if _pages is passed pop off front
-			currentQueueItem = queueObj.splice(0,1)[0];
+			currentQueueItem = queueObj[0]; //queueObj.splice(0,1)[0];
 		} else{ //else we know the object has already been popped off _pages
 			currentQueueItem = queueObj;
 		}
-		
+		_currentUrl = currentQueueItem.url;
 		var numTabs = 0;
 		if(_tabId == null) {
 			chrome.tabs.create({url : currentQueueItem.url}, function(tab){
@@ -100,6 +105,17 @@ chrome.tabs.onRemoved.addListener(
 		}
 });
 
+chrome.tabs.onUpdated.addListener(
+	function( tabId , removeInfo, tab){
+		if(tabId == _tabId) {
+			//_lastUrl = _currentUrl;
+			//if(_lastUrl != _currentUrl)
+			//	removeFromQueue(_lastUrl);
+		}
+		
+});
+
+
 //Hover Message Listener (From Content Script)
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
@@ -124,4 +140,16 @@ function /*Queue Object*/removeFromQueue(url){
   return queueObj;
 
 }
+
+function /*Queue Object*/getFromQueue(url){
+	for(var i = 0; i < _pages.length; i++){
+		if(_pages[i].url == url) {
+			return _pages[i];
+		} 
+      
+	}
+}
+
+
+
 
