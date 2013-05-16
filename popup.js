@@ -29,8 +29,15 @@ $(function(){
     
     $('button').click(function(e){
       var id = $(this).attr('id');
-	  _bg.lastUrl = id;
+      _bg._lastUrl = _bg._currentUrl;
+      //_bg.log('last: ' + _bg._lastUrl + ' current: ' + _bg._currentUrl);
       _bg.openLink( _bg.getFromQueue(id) , true);
+      _bg.log('last: ' + _bg._lastUrl + ' current: ' + _bg._currentUrl);
+      if(_bg._lastUrl != _bg._currentUrl && _bg._tabOpen){
+        _bg.log('should be removing');
+        _bg.removeFromQueue(_bg._lastUrl);
+        }
+        
 	  /*
       $(this).hide( "slide", {percent: 0}, 375, function(){
           if(_bg._pages.length < 1)

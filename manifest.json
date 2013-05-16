@@ -15,11 +15,15 @@
   },
   "commands": {
     "queue-forward": {
-      "suggested_key": { "windows": "Ctrl+Shift+F", "mac": "Command+Shift+F" },
+      "suggested_key": { "default":"Ctrl+Shift+F",
+                        "windows": "Ctrl+Shift+F", 
+                        "mac": "Command+Shift+F" },
       "description": "Load Next Page In Queue"
     },
 	"hover-add": {
-      "suggested_key": { "windows": "Ctrl+Shift+A", "mac": "Command+Shift+A" },
+      "suggested_key": { "default":"Ctrl+Shift+A",
+                        "windows": "Ctrl+Shift+A", 
+                        "mac": "Command+Shift+A" },
       "description": "Add Link You're Hovering Over To Queue"
     }
   },"content_scripts": [

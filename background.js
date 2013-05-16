@@ -54,7 +54,7 @@ chrome.commands.onCommand.addListener(function(command) {
 			openLink( _pages, false);  //pop off the front
 	  } 
 });
-
+function log(msg) {console.log(msg)};
 
 function openLink(queueObj, openIfEmpty){
 	console.log('pages  length: '+_pages.length);
@@ -105,12 +105,11 @@ chrome.tabs.onRemoved.addListener(
 		}
 });
 
+//Tab URL change Listener
 chrome.tabs.onUpdated.addListener(
 	function( tabId , removeInfo, tab){
 		if(tabId == _tabId) {
-			//_lastUrl = _currentUrl;
-			//if(_lastUrl != _currentUrl)
-			//	removeFromQueue(_lastUrl);
+
 		}
 		
 });
