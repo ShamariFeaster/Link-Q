@@ -27,11 +27,11 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	var url = info.linkUrl;
   //you can select the text of a link but this is obsolete and should be removed
 	if(typeof info.selectionText != 'undefined') {
-		_pages.push({'text' : text, 'url' : url});
+		_pages.push({'text' : text, 'url' : url, 'pinned': false});
 
 	}
 	else {
-		_pages.push({'text' : url, 'url' : url});
+		_pages.push({'text' : url, 'url' : url, 'pinned': false});
 
 	}
 });
@@ -42,7 +42,7 @@ chrome.commands.onCommand.addListener(function(command) {
 	if (command == "hover-add") {
 			console.log('hover Add');
 			if(_hovering){
-				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL});
+				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL, 'pinned': false});
 				console.log('pushed ' + _contentScriptURL + ' onto queue');
 				
 			}
@@ -50,44 +50,47 @@ chrome.commands.onCommand.addListener(function(command) {
 
 		if (command == "queue-forward") {
 			_lastUrl = _currentUrl;
-			removeFromQueue(_currentUrl);
-			openLink( _pages, false);  //pop off the front
+      removeFromQueue(_lastUrl);
+      var queueObj = (getFromQueue('') == null) ? _pages : getFromQueue('');
+			openLink(queueObj, false);  //pop off the front
+      
 	  } 
 });
 function log(msg) {console.log(msg)};
 
 function openLink(queueObj, openIfEmpty){
 	console.log('pages  length: '+_pages.length);
+
 	var currentQueueItem;
     if(_pages.length > 0 || openIfEmpty) {
-		if(Array.isArray(queueObj)) { //if _pages is passed pop off front
-			currentQueueItem = queueObj[0]; //queueObj.splice(0,1)[0];
-		} else{ //else we know the object has already been popped off _pages
-			currentQueueItem = queueObj;
-		}
-		_currentUrl = currentQueueItem.url;
-		var numTabs = 0;
-		if(_tabId == null) {
-			chrome.tabs.create({url : currentQueueItem.url}, function(tab){
-				_tabId = tab.id;
-				_tabOpen = true;
-				_tab = tab;
-				chrome.tabs.move(_tabId, {index: -1});
-				console.log('creating new tab. tab position: ' +  _tab.index);
-			});
-			
-		} else if(_tabOpen){
-			console.log('tab is active');
-			chrome.tabs.update(_tabId, {url: currentQueueItem.url});
-			
-		} else if(!_tabOpen){
-			chrome.tabs.create({url : currentQueueItem.url, index : numTabs}, function(tab){
-				_tabId = tab.id;
-				_tabOpen = true;
-				_tab = tab;
-				chrome.tabs.move(_tabId, {index: -1});
-			});
-		}
+      if(Array.isArray(queueObj)) { //if _pages is passed pop off front
+        currentQueueItem = queueObj[0]; //queueObj.splice(0,1)[0];
+      } else{ //else we know the object has already been popped off _pages
+        currentQueueItem = queueObj;
+      }
+      _currentUrl = currentQueueItem.url;
+      var numTabs = 0;
+      if(_tabId == null) {
+        chrome.tabs.create({url : currentQueueItem.url}, function(tab){
+          _tabId = tab.id;
+          _tabOpen = true;
+          _tab = tab;
+          chrome.tabs.move(_tabId, {index: -1});
+          console.log('creating new tab. tab position: ' +  _tab.index);
+        });
+        
+      } else if(_tabOpen){
+        console.log('tab is active');
+        chrome.tabs.update(_tabId, {url: currentQueueItem.url});
+        
+      } else if(!_tabOpen){
+        chrome.tabs.create({url : currentQueueItem.url, index : numTabs}, function(tab){
+          _tabId = tab.id;
+          _tabOpen = true;
+          _tab = tab;
+          chrome.tabs.move(_tabId, {index: -1});
+        });
+      }
 
 	} else {
 		if(_tabOpen)
@@ -129,10 +132,12 @@ function /*Queue Object*/removeFromQueue(url){
 	var tempArr = Array();
   var queueObj = null;
 	for(var i = 0; i < _pages.length; i++){
-		if(_pages[i].url != url) {
+    //push all that arent url, unless url is pinned
+		if(_pages[i].url != url || _pages[i].pinned == true) {
 			tempArr.push(_pages[i]);
 		} else {
       queueObj = _pages[i];
+      console.log('removed ' + _pages[i].url);
       }
 	}
 	_pages = tempArr;
@@ -140,11 +145,34 @@ function /*Queue Object*/removeFromQueue(url){
 
 }
 
-function /*Queue Object*/getFromQueue(url){
+function /*void*/togglePin(url){
 	for(var i = 0; i < _pages.length; i++){
 		if(_pages[i].url == url) {
-			return _pages[i];
+			if(_pages[i].pinned == false) {
+        _pages[i].pinned = true;  
+        return true;
+      }
+      else {
+        _pages[i].pinned = false;
+        return false;
+      }
 		} 
+	}
+}
+//if url is '', returns the first non-pinned item
+function /*Queue Object*/ getFromQueue(url){
+	for(var i = 0; i < _pages.length; i++){
+		if(url != '') {
+      if(_pages[i].url == url) {
+        return _pages[i];
+      }
+    } else {
+      if(_pages[i].pinned == false)
+        return _pages[i];
+      else
+        return null;
+      }
+      
       
 	}
 }

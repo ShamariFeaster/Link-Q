@@ -7,6 +7,7 @@ $(function(){
   var content = "";
   var linkText = "";
   var url = "";
+  var pinned = "";
   if(_bg._pages.length > 0){
     for(var i = 0; i < _bg._pages.length; i++){
         /*if link has no text then e put the website name in queue
@@ -19,7 +20,9 @@ $(function(){
         } else {
           linkText = _bg._pages[i].text;
           }
-        content += '<button id="' + _bg._pages[i].url + '">' + linkText + '</button>';
+        pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
+        content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
+        <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td></tr>';
       }
     $('#linqs').html(content);
   } else  {
@@ -27,26 +30,25 @@ $(function(){
     
     }
     
-    $('button').click(function(e){
+    $('button.link').click(function(e){
       var id = $(this).attr('id');
       _bg._lastUrl = _bg._currentUrl;
-      //_bg.log('last: ' + _bg._lastUrl + ' current: ' + _bg._currentUrl);
       _bg.openLink( _bg.getFromQueue(id) , true);
-      _bg.log('last: ' + _bg._lastUrl + ' current: ' + _bg._currentUrl);
       if(_bg._lastUrl != _bg._currentUrl && _bg._tabOpen){
-        _bg.log('should be removing');
         _bg.removeFromQueue(_bg._lastUrl);
         }
-        
-	  /*
-      $(this).hide( "slide", {percent: 0}, 375, function(){
-          if(_bg._pages.length < 1)
-            window.close();
-        });
-		*/
       
       });
     
+    $('button.pin').click(function(e){
+        var url = $(this).attr('id');
+        url =  url.replace('_pin', '');
+        if(_bg.togglePin(url) == true) {
+          $(this).toggleClass('pinned', true);
+        } else{
+          $(this).toggleClass('pinned', false);
+        }
+      });
     
     });  
   
