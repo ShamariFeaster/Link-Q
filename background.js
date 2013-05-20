@@ -14,6 +14,7 @@ var _tabOpen = false;
 var _hovering = false;
 var _contentScriptURL = "";
 var _contentScriptText = "";
+var _folders = '';
 
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
