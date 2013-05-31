@@ -15,6 +15,7 @@ var _hovering = false;
 var _contentScriptURL = "";
 var _contentScriptText = "";
 var _folders = '';
+var _subFolders = '';
 var _rootFolderId = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
@@ -52,8 +53,9 @@ chrome.commands.onCommand.addListener(function(command) {
 		if (command == "queue-forward") {
 			_lastUrl = _currentUrl;
       removeFromQueue(_lastUrl);
-      var queueObj = (getFromQueue('') == null) ? _pages : getFromQueue('');
-			openLink(queueObj, false);  //pop off the front
+      var queueObj =  getFromQueue('');
+      if(typeof queueObj != 'undefined')
+        openLink(queueObj, false);  //pop off the front
       
 	  } 
 });
@@ -171,7 +173,7 @@ function /*Queue Object*/ getFromQueue(url){
       if(_pages[i].pinned == false)
         return _pages[i];
       else
-        return null;
+        continue;
       }
       
       

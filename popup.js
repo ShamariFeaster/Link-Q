@@ -5,8 +5,8 @@ function init(){
 $(function(){
   _bg = chrome.extension.getBackgroundPage();  
   
-  $('folder_select').html('<tr><td><button id="confirm_folder">Pick This Folder</button></td> \
-                          <td>'+_bg._folders+'</td></tr>');  
+  //$('#folder_select').html('<tr><td><button id="confirm_folder">Pick This Folder</button></td> \
+  //                        <td>'+_bg._folders+'</td></tr>');  
   var content = "";
   var linkText = "";
   var url = "";
@@ -25,7 +25,8 @@ $(function(){
           }
         pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
         content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
-        <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td></tr>';
+        <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
+        <td>' + _bg._subFolders + '</td></tr>';
       }
     $('#linqs').html(content);
   } else  {
