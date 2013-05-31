@@ -15,7 +15,7 @@ var _hovering = false;
 var _contentScriptURL = "";
 var _contentScriptText = "";
 var _folders = '';
-
+var _rootFolderId = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
 // Create context item for links
@@ -178,6 +178,12 @@ function /*Queue Object*/ getFromQueue(url){
 	}
 }
 
-
+function objToString(obj){
+  var a = '';
+  for(var p in obj){
+    a += p + ' : ' + obj[p] + ' \n';
+    }
+  return a;
+  }
 
 
