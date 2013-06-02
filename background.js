@@ -19,6 +19,12 @@ var _subFolders = '';
 var _rootFolderId = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
+
+window.rootTree = null; //global
+
+var _popupSubfolderState = '';
+var _popupRootfolderState = '';
+
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
                                        "id": "Link-Q"});
@@ -29,12 +35,14 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	var url = info.linkUrl;
   //you can select the text of a link but this is obsolete and should be removed
 	if(typeof info.selectionText != 'undefined') {
-		_pages.push({'text' : text, 'url' : url, 'pinned': false});
-
+		_pages.push({'text' : text, 'url' : url, 'pinned': false, 'subfolder':''});
+    if(window.rootTree == null)
+          createBookmarkTreeSelect();
 	}
 	else {
-		_pages.push({'text' : url, 'url' : url, 'pinned': false});
-
+		_pages.push({'text' : url, 'url' : url, 'pinned': false, 'subfolder':''});
+    if(window.rootTree == null)
+          createBookmarkTreeSelect();
 	}
 });
 
@@ -45,6 +53,8 @@ chrome.commands.onCommand.addListener(function(command) {
 			console.log('hover Add');
 			if(_hovering){
 				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL, 'pinned': false});
+        if(window.rootTree == null)
+          createBookmarkTreeSelect();
 				console.log('pushed ' + _contentScriptURL + ' onto queue');
 				
 			}
@@ -121,6 +131,9 @@ chrome.tabs.onUpdated.addListener(
 });
 
 
+
+
+
 //Hover Message Listener (From Content Script)
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
@@ -188,4 +201,47 @@ function objToString(obj){
   return a;
   }
 
+chrome.runtime.onStartup.addListener(function() {
+  //place root folder select construction here
+  createBookmarkTreeSelect();
+  
+  });
 
+//now this can list subfolders when passed 'searchId' of parent
+function traverseTree(tree, level, option, searchId){
+    var space = '';
+    if(level > -1) {
+      for(var x = 0; x < level; x++){
+        space += '.';
+      }
+    }
+    for(var i = 0; i < tree.length; i++){
+      if(typeof tree[i].url == 'undefined' && tree[i].title != '') {
+        //if search, only add children of searchId
+        if(searchId != '' ) {
+            if(searchId == tree[i].parentId)
+              option.text += '<option value="' + tree[i].id + '">' + space + tree[i].title + '</option>';
+          }else {
+            option.text += '<option value="' + tree[i].id + '">' + space + tree[i].title + '</option>';
+            }
+        
+      }
+      if(typeof tree[i].children != 'undefined') {
+        traverseTree(tree[i].children, level+1, option, searchId);
+        }
+  }
+}
+
+//select goes on option page
+function createBookmarkTreeSelect(){
+  chrome.bookmarks.getTree(function(tree){
+        window.rootTree = tree;
+        var option = {text:''};
+        traverseTree(tree,0,option,'');
+        _folders = '<select id="folder_select">';
+        _folders += option.text;
+        _folders += '</select>';
+        log('Running createBookmarkTreeSelect()');
+      });
+
+  }

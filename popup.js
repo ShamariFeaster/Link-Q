@@ -1,12 +1,10 @@
 var _bg = null;
+var __subfolderText = '';
 function init(){
-  
- //alert(_bg._pages.length);
+
 $(function(){
   _bg = chrome.extension.getBackgroundPage();  
   
-  //$('#folder_select').html('<tr><td><button id="confirm_folder">Pick This Folder</button></td> \
-  //                        <td>'+_bg._folders+'</td></tr>');  
   var content = "";
   var linkText = "";
   var url = "";
@@ -26,13 +24,34 @@ $(function(){
         pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
         content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
         <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
-        <td>' + _bg._subFolders + '</td></tr>';
+        <td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
       }
     $('#linqs').html(content);
-  } else  {
-    $('#linqs').text('No Links In Queue');
     
+
+      
+  } else  {
+    $('#linqs').text(' Links In Queue');
     }
+    
+    $('#root_folder').html('<tr><td>'+_bg._folders+'</td></tr>');  
+    
+    //reinstating saved root folder state
+    if(_bg._popupRootfolderState != ''){
+      _bg.log(_bg._popupRootfolderState);
+      $('#folder_select').val(_bg._popupRootfolderState);
+    }
+    
+    //reinstating subfolder state
+    //TODO: dont do this unecessaraly, consider flag of some sort
+    $('#linqs tr').each(function(index, link){
+        var url = $(link).find('.link').attr('id');
+        var queueObj = _bg.getFromQueue(url);
+        if(queueObj.subfolder != ''){
+          $(link).find('#subfolder_select').val(queueObj.subfolder);
+        }
+        
+        });
     
     $('button.link').click(function(e){
       var id = $(this).attr('id');
@@ -53,11 +72,41 @@ $(function(){
           $(this).toggleClass('pinned', false);
         }
       });
+      
+      
+    $('#root_folder').change(function(){
+        _bg._rootFolderId = $('#root_folder option:selected').val();
+        _bg._popupRootfolderState = $('#root_folder option:selected').val();
+        //create subfolder select
+        var option = {text:''};
+        _bg.traverseTree(_bg.window.rootTree,-1000,option,_bg._rootFolderId);
+        if(option.text != ''){
+          _subfolderText = '<select id="subfolder_select">';
+          _subfolderText += option.text;
+          _subfolderText += '</select>';
+          _bg._subFolders = _subfolderText;
+          }
+        //so every link row gets a select, selector is class not id
+        $('.subfolder_div').html(_bg._subFolders);
+      });
     
-    });  
+    $(window).bind("unload", function() { 
+      //_bg.log('beforeunload: ' + _subfolderText);
+      
+      //_bg.log('beforeunload: ' + _bg._folders);
+      $('#linqs tr').each(function(index, link){
+        var url = $(link).find('.link').attr('id');
+        var subfolder = $(link).find('#subfolder_select').val();
+        var queueObj = _bg.getFromQueue(url);
+        queueObj.subfolder = subfolder;
+        });
+      });
+    
+    
+    });//end onload  
   
   
-  }
+}//end init
 
 
 
