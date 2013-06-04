@@ -25,6 +25,8 @@ window.rootTree = null; //global
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
 
+
+
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
                                        "id": "Link-Q"});
@@ -35,14 +37,15 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	var url = info.linkUrl;
   //you can select the text of a link but this is obsolete and should be removed
 	if(typeof info.selectionText != 'undefined') {
-		_pages.push({'text' : text, 'url' : url, 'pinned': false, 'subfolder':''});
-    if(window.rootTree == null)
-          createBookmarkTreeSelect();
+		/* all queue items initalize with bookmarks bars as their selected subfolder*/
+		_pages.push({'text' : text, 'url' : url, 'pinned': false, 'subfolder':'1'});
+		if(window.rootTree == null)
+			  createBookmarkTreeSelect();
 	}
 	else {
-		_pages.push({'text' : url, 'url' : url, 'pinned': false, 'subfolder':''});
-    if(window.rootTree == null)
-          createBookmarkTreeSelect();
+		_pages.push({'text' : _contentScriptText, 'url' : url, 'pinned': false, 'subfolder':'1'});
+		if(window.rootTree == null)
+			  createBookmarkTreeSelect();
 	}
 });
 
@@ -52,9 +55,9 @@ chrome.commands.onCommand.addListener(function(command) {
 	if (command == "hover-add") {
 			console.log('hover Add');
 			if(_hovering){
-				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL, 'pinned': false});
-        if(window.rootTree == null)
-          createBookmarkTreeSelect();
+				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL, 'pinned': false, 'subfolder':'1'});
+				if(window.rootTree == null)
+				  createBookmarkTreeSelect();
 				console.log('pushed ' + _contentScriptURL + ' onto queue');
 				
 			}
@@ -62,10 +65,10 @@ chrome.commands.onCommand.addListener(function(command) {
 
 		if (command == "queue-forward") {
 			_lastUrl = _currentUrl;
-      removeFromQueue(_lastUrl);
-      var queueObj =  getFromQueue('');
-      if(typeof queueObj != 'undefined')
-        openLink(queueObj, false);  //pop off the front
+			removeFromQueue(_lastUrl);
+			var queueObj =  getFromQueue('');
+			if(typeof queueObj != 'undefined')
+			openLink(queueObj, false);  //pop off the front
       
 	  } 
 });
@@ -159,6 +162,12 @@ function /*Queue Object*/removeFromQueue(url){
 	_pages = tempArr;
   return queueObj;
 
+}
+
+function emptyQueue(){
+	for(var i = 0; i <= _pages.length; i++){
+		_pages.pop();
+	}
 }
 
 function /*void*/togglePin(url){

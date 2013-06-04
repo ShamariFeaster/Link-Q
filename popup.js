@@ -31,14 +31,14 @@ $(function(){
 
       
   } else  {
-    $('#linqs').text(' Links In Queue');
+    $('#linqs').text('No Links In Queue');
     }
-    
-    $('#root_folder').html('<tr><td>'+_bg._folders+'</td></tr>');  
+    //display root folder select
+    $('#root_folder').html('<tr><td>'+_bg._folders+'</td><td><button id="empty_queue">Clear Queue</button></td></tr> \
+							<tr><td><button id="save_pinned">Save Pinned</button></td></tr>');  
     
     //reinstating saved root folder state
     if(_bg._popupRootfolderState != ''){
-      _bg.log(_bg._popupRootfolderState);
       $('#folder_select').val(_bg._popupRootfolderState);
     }
     
@@ -72,28 +72,75 @@ $(function(){
           $(this).toggleClass('pinned', false);
         }
       });
-      
-      
+    //clears queue
+	$('button#empty_queue').click(function(e){
+		_bg.emptyQueue();
+		$('#linqs tr').each(function(index, link){//remove buttons from popup
+			$(link).remove();
+		});
+	});	
+    
+	$('button#save_pinned').click(function(e){
+		var mark = null;
+		var queue = _bg._pages;
+		for(var i = 0; i <= queue.length; i++){
+			mark = queue[i];
+			if(mark.pinned == true){
+				chrome.bookmarks.create({parentId: mark.subfolder, title: mark.text, url: mark.url }, function(node){
+					if(typeof node.id != 'undefined')
+						_bg.log('Bookmark was made');
+				
+				});
+			}
+		}
+	});	
+	//
+	$('#linqs').change(function(){
+		_bg.log('subfolder was changed: ' + $(this).html());
+		var url = $(this).find('.link').attr('id');
+        var queueObj = _bg.getFromQueue(url);
+        queueObj.subfolder = $(this).find('option:selected').val();
+		_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
+	});
+	
     $('#root_folder').change(function(){
         _bg._rootFolderId = $('#root_folder option:selected').val();
         _bg._popupRootfolderState = $('#root_folder option:selected').val();
+		var _subfolderText = '';
         //create subfolder select
         var option = {text:''};
         _bg.traverseTree(_bg.window.rootTree,-1000,option,_bg._rootFolderId);
+		//if there are subfolders
         if(option.text != ''){
-          _subfolderText = '<select id="subfolder_select">';
-          _subfolderText += option.text;
-          _subfolderText += '</select>';
-          _bg._subFolders = _subfolderText;
-          }
+			_subfolderText = '<select id="subfolder_select"> \
+							<option value="' + _bg._rootFolderId + '">Root</option>';
+			_subfolderText += option.text;
+			_subfolderText += '</select>';
+			_bg._subFolders = _subfolderText;
+        }
+		  //if there aren't subfolders
+		else{
+			_bg._subFolders = '';
+		}
+		/*when a new root is chosen each mark get's it's parent folder, which
+		is stupidly a property called 'subfolder', updated to the newly selected
+		root*/
+		$('#linqs tr').each(function(index, link){
+				var url = $(link).find('.link').attr('id');
+				var queueObj = _bg.getFromQueue(url);
+				queueObj.subfolder = _bg._rootFolderId;
+				//_bg.log('root for ' + $(link).find('.link').text() + ' is ' + queueObj.subfolder);
+		});
+		
         //so every link row gets a select, selector is class not id
         $('.subfolder_div').html(_bg._subFolders);
       });
     
+	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
-      //_bg.log('beforeunload: ' + _subfolderText);
-      
-      //_bg.log('beforeunload: ' + _bg._folders);
+	  /*this may be unecessary because im saving subfolder state through
+	  events in the function above, leaving it for now since it's an optimization 
+	  to remove it - want to continue*/
       $('#linqs tr').each(function(index, link){
         var url = $(link).find('.link').attr('id');
         var subfolder = $(link).find('#subfolder_select').val();
