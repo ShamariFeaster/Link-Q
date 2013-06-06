@@ -11,6 +11,8 @@ var _pages = Array();
 var _tabId = null; //this is the tab where the queue _pages will be displayed
 var _tab = null;
 var _tabOpen = false;
+var _currentTabId = null;
+var _currentTabTitle = '';
 var _hovering = false;
 var _contentScriptURL = "";
 var _contentScriptText = "";
@@ -24,8 +26,6 @@ window.rootTree = null; //global
 
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
-
-
 
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
@@ -49,6 +49,7 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	}
 });
 
+
 //Add Shortcut To Move Through Queue
 chrome.commands.onCommand.addListener(function(command) {
 
@@ -60,7 +61,25 @@ chrome.commands.onCommand.addListener(function(command) {
 				  createBookmarkTreeSelect();
 				console.log('pushed ' + _contentScriptURL + ' onto queue');
 				
-			}
+			}//to add the current page 
+      else{
+        chrome.tabs.get(_currentTabId, function(tab){
+          if(window.rootTree == null)
+            createBookmarkTreeSelect();
+          /*try to set title 2 ways: 
+           * 1 - use <a> hover event msg from content script to grab
+           *     from the 'sender' object
+           * 2 - or we use the current tab's url*/  
+          if(typeof _currentTabTitle == 'undefined')
+            _currentTabTitle = tab.url;
+          else if(_currentTabTitle == ''){
+            _currentTabTitle = tab.url;
+            }
+          log('Trying to add current page, url is: ' + tab.url + ' title is: ' + _currentTabTitle);
+          _pages.push({'text' : _currentTabTitle, 'url' : tab.url, 'pinned': false, 'subfolder':'1'});
+          });
+
+        }
 		}
 
 		if (command == "queue-forward") {
@@ -72,7 +91,6 @@ chrome.commands.onCommand.addListener(function(command) {
       
 	  } 
 });
-function log(msg) {console.log(msg)};
 
 function openLink(queueObj, openIfEmpty){
 	console.log('pages  length: '+_pages.length);
@@ -124,27 +142,31 @@ chrome.tabs.onRemoved.addListener(
 		}
 });
 
-//Tab URL change Listener
-chrome.tabs.onUpdated.addListener(
-	function( tabId , removeInfo, tab){
-		if(tabId == _tabId) {
-
-		}
-		
+//this is to capture the opening tab on chrome startup
+chrome.tabs.onCreated.addListener(function(tab) {
+  if(_currentTabId == null) {
+    _currentTabId = tab.tabId;
+    _currentTabTitle = tab.title; //could be undefined
+  }
 });
-
-
-
+//captures current tab information
+chrome.tabs.onActivated.addListener(function(tab) {
+  _currentTabId = tab.tabId;
+  _currentTabTitle = tab.title; //could be undefined
+});
 
 
 //Hover Message Listener (From Content Script)
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
-		//console.log(request.hoverURL + ' ' + request.linkText);
-		_hovering = request.hovering;
-		_contentScriptURL = request.hoverURL;
-		_contentScriptText = request.linkText;
-		sendResponse({response: "Hover URL Received"});
+      _hovering = request.hovering;
+      _contentScriptURL = request.hoverURL;
+      _contentScriptText = request.linkText;
+      //backup way for getting vurrent tab semantics
+      _currentTabTitle = sender.tab.title; //could be undefined
+
+      sendResponse({response: "Hover URL Received"});
+    
   });
 
 function /*Queue Object*/removeFromQueue(url){
@@ -165,7 +187,7 @@ function /*Queue Object*/removeFromQueue(url){
 }
 
 function emptyQueue(){
-	for(var i = 0; i <= _pages.length; i++){
+  while(_pages.length){
 		_pages.pop();
 	}
 }
@@ -210,11 +232,6 @@ function objToString(obj){
   return a;
   }
 
-chrome.runtime.onStartup.addListener(function() {
-  //place root folder select construction here
-  createBookmarkTreeSelect();
-  
-  });
 
 //now this can list subfolders when passed 'searchId' of parent
 function traverseTree(tree, level, option, searchId){
@@ -254,3 +271,5 @@ function createBookmarkTreeSelect(){
       });
 
   }
+
+function log(msg) {console.log(msg)};

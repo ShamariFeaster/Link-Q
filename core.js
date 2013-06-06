@@ -1,10 +1,10 @@
-$(function(){
-	$('a').hover(
+jQuery(function(){
+	jQuery('a').hover(
 		//in
 		function(){
 			console.log(this.href);
 			chrome.runtime.sendMessage({hoverURL: this.href, linkText: $(this).text(), hovering: true}, function(response) {
-				console.log('hovering');
+				console.log('hovering2');
 			});
 			
 		}
@@ -17,4 +17,6 @@ $(function(){
 		});
 
 
+
+  
 });
