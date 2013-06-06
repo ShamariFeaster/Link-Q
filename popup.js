@@ -24,7 +24,8 @@ $(function(){
         pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
         content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
         <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
-        <td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
+        <td><td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
+		<td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
       }
     $('#linqs').html(content);
     
@@ -62,7 +63,41 @@ $(function(){
         }
       
       });
-    
+    //this was put in div, so I can get/set button text by getting the html of div
+	$('div.rename').click(function(e){
+        var url = $(this).attr('id');
+		var $parent = $(this);
+		$parent.html('<input id="rename_text" type="text" size="20"></textarea>');
+		$parent.find('#rename_text').focus();
+		var queueObj = _bg.getFromQueue(url);
+		
+		$parent.focusout(function(){
+			queueObj.text = $parent.find('#rename_text').val();
+			$('#linqs tr').each(function(index, link){
+				var thisUrl = $(link).find('.link').attr('id');
+				if(thisUrl == url)
+					$(link).find('.link').text(queueObj.text);
+			});
+			$parent.html('<button id="rename_button">Rename Mark</button>');
+			
+		});
+		$('div.rename').keydown(function(e){
+			if ( e.keyCode == 13 ) {
+				var url = $(this).attr('id');
+				var $parent = $(this);
+				var queueObj = _bg.getFromQueue(url);
+				queueObj.text = $parent.find('#rename_text').val();
+				$('#linqs tr').each(function(index, link){
+					var thisUrl = $(link).find('.link').attr('id');
+					if(thisUrl == url)
+						$(link).find('.link').text(queueObj.text);
+				});
+				$parent.html('<button id="rename_button">Rename Mark</button>');
+			}
+
+		});
+	});
+	
     $('button.pin').click(function(e){
         var url = $(this).attr('id');
         url =  url.replace('_pin', '');
@@ -96,11 +131,14 @@ $(function(){
 	});	
 	//
 	$('#linqs').change(function(){
-		_bg.log('subfolder was changed: ' + $(this).html());
-		var url = $(this).find('.link').attr('id');
-        var queueObj = _bg.getFromQueue(url);
-        queueObj.subfolder = $(this).find('option:selected').val();
-		_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
+		var selectedValue = $(this).find('option:selected').val();
+		if(typeof selectedValue != 'undefined') {
+			_bg.log('subfolder was changed: ' + $(this).html());
+			var url = $(this).find('.link').attr('id');
+			var queueObj = _bg.getFromQueue(url);
+			queueObj.subfolder = selectedValue;
+			_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
+		}
 	});
 	
     $('#root_folder').change(function(){
