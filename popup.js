@@ -1,5 +1,7 @@
 var _bg = null;
 var __subfolderText = '';
+window.categories = Array();
+
 function init(){
 
 $(function(){
@@ -35,13 +37,77 @@ $(function(){
     $('#linqs').text('No Links In Queue');
     }
     //display root folder select
-    $('#root_folder').html('<tr><td>'+_bg._folders+'</td><td><button id="empty_queue">Clear Queue</button></td></tr> \
-							<tr><td><button id="save_pinned">Save Pinned</button></td></tr>');  
+    $('#root_folder').html('\
+              <tr>\
+                  <td>'+_bg._folders+'</td>\
+                  <td><button id="empty_queue">Clear Queue</button></td>\
+              </tr> \
+							<tr>\
+                  <td><button id="save_pinned">Save Pinned</button></td> \
+                  <td><button id="create_new_bundle">New Bundle</button></td>\
+              </tr>');  
     
     //reinstating saved root folder state
     if(_bg._popupRootfolderState != ''){
       $('#folder_select').val(_bg._popupRootfolderState);
     }
+    
+    $('#create_new_bundle').click(function(e){
+        $('#linqs').hide();
+         $('#root_folder').hide();
+        var newBundleHtml = '<tr id="new_subfolders_input">\
+                                <td>Bundle: </td><td><input id="new_bundle_name" type="text" size="20"></textarea></td> \
+                                <td><button id="add_subfolder">Add Category</button></td> \
+                                <td><button id="save_bundle">Save This Bundle</button></td>\
+                             </tr>\
+                             <tr>\
+                                <td><button id="back_to_linqs">Back</button></td>\
+                             </tr>';
+        $('#new_bundle_gui').html(newBundleHtml); //maybe not working because id's aren't visible, 
+        $('#new_bundle_gui').show();
+
+         $('#add_subfolder').unbind(); //prevent mutiple action due to duplicate handlers
+         $('#back_to_linqs').unbind();
+         $('.category_row').unbind();
+         
+        //handlers for adding and removing subfolder rows 
+        $('#add_subfolder').click(function(e){
+          $('#new_subfolders_input').after('\
+          <tr class="category_row">\
+            <td>Category: </td><td><input class="subfolder_name" type="text" size="20"></textarea></td>\
+            <td><button id="remove_category">Remove Category</button></td>\
+          </tr>');
+          
+          $('.category_row').click(function(e){
+            if(e.target.nodeName == 'BUTTON')
+              $(this).remove();
+          });
+        });
+    
+        $('#save_bundle').click(function(e){
+          $('.category_row').each(function(index, row){
+              $row = $(row);
+              window.categories.push($row.find('.subfolder_name').val()); 
+              //_bg.log(window.categories[index]);
+            });
+            
+            //create root in bookmarks bar (for now)
+            //get root id
+            //for each index in categories array, create subfolder under root
+          
+          });
+    
+        //switches back to bundle edit mode
+        $('#back_to_linqs').click(function(e){
+            _bg.log('Clicked'); 
+            $('#new_bundle_gui').hide();
+            $('#new_subfolders_input').remove();
+            $('#linqs').show();
+            $('#root_folder').show();
+          });  
+      });
+    
+    
     
     //reinstating subfolder state
     //TODO: dont do this unecessaraly, consider flag of some sort
@@ -53,7 +119,7 @@ $(function(){
         }
         
         });
-    
+    //open link
     $('button.link').click(function(e){
       var id = $(this).attr('id');
       _bg._lastUrl = _bg._currentUrl;
@@ -73,7 +139,7 @@ $(function(){
 		
 		$parent.focusout(function(){
 			queueObj.text = $parent.find('#rename_text').val();
-			$('#linqs tr').each(function(index, link){
+			$('#linqs tr').each(function(index, link){ //<------dupliclate code
 				var thisUrl = $(link).find('.link').attr('id');
 				if(thisUrl == url)
 					$(link).find('.link').text(queueObj.text);
@@ -81,23 +147,24 @@ $(function(){
 			$parent.html('<button id="rename_button">Rename Mark</button>');
 			
 		});
+    
 		$('div.rename').keydown(function(e){
 			if ( e.keyCode == 13 ) {
 				var url = $(this).attr('id');
 				var $parent = $(this);
 				var queueObj = _bg.getFromQueue(url);
-				queueObj.text = $parent.find('#rename_text').val();
-				$('#linqs tr').each(function(index, link){
+				queueObj.text = $parent.find('#rename_text').val();//update queue object
+				$('#linqs tr').each(function(index, link){//cycle through queue gui and update button text
 					var thisUrl = $(link).find('.link').attr('id');
 					if(thisUrl == url)
 						$(link).find('.link').text(queueObj.text);
 				});
-				$parent.html('<button id="rename_button">Rename Mark</button>');
+				$parent.html('<button id="rename_button">Rename Mark</button>');//replace textarea with button after done
 			}
 
 		});
 	});
-	
+    //pins mark
     $('button.pin').click(function(e){
         var url = $(this).attr('id');
         url =  url.replace('_pin', '');
@@ -114,7 +181,7 @@ $(function(){
 			$(link).remove();
 		});
 	});	
-    
+  //saves pinned links to bundle  
 	$('button#save_pinned').click(function(e){
 		var mark = null;
 		var queue = _bg._pages;
@@ -129,7 +196,7 @@ $(function(){
 			}
 		}
 	});	
-	//
+	//updates subfolder property of mark when new sub selected
 	$('#linqs').change(function(){
 		var selectedValue = $(this).find('option:selected').val();
 		if(typeof selectedValue != 'undefined') {
@@ -140,7 +207,7 @@ $(function(){
 			_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
 		}
 	});
-	
+    //updates possible subs when new root is selected
     $('#root_folder').change(function(){
         _bg._rootFolderId = $('#root_folder option:selected').val();
         _bg._popupRootfolderState = $('#root_folder option:selected').val();

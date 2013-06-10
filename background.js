@@ -84,8 +84,12 @@ chrome.commands.onCommand.addListener(function(command) {
     /*The idea here is to not pop off the queue until we move to
      * the next mark, allowing user to pin and save from the popup*/
 		if (command == "queue-forward") {
-			removeFromQueue(_lastUrl);
-      openLink(_pages, false);  //pop off the front
+      //<<<This doesn't work>>>>
+			removeFromQueue(_lastUrl); //wont remove if last is pinned 
+      if(getFromQueue(_lastUrl).pinned == true)
+        openLink(getFromQueue(''), false);  //so we get first unpinned using getFromQueue('')
+      else
+        openLink(_pages, false);  //however if it's not pinned we just pop off the front
       _lastUrl = _currentUrl;
       
       
