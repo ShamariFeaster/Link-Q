@@ -36,6 +36,7 @@ $(function(){
   } else  {
     $('#linqs').text('No Links In Queue');
     }
+    
     //display root folder select
     $('#root_folder').html('\
               <tr>\
@@ -45,12 +46,23 @@ $(function(){
 							<tr>\
                   <td><button id="save_pinned">Save Pinned</button></td> \
                   <td><button id="create_new_bundle">New Bundle</button></td>\
-              </tr>');  
+                  <td><button id="load_bundle">Load Bundle</button></td>\
+                  </tr>');  
     
     //reinstating saved root folder state
     if(_bg._popupRootfolderState != ''){
-      $('#folder_select').val(_bg._popupRootfolderState);
+      $('#folder_select').val(_bg._popupRootfolderState); //#folder_select is in _bg_folders html
     }
+    
+    $('#load_bundle').click(function(e){
+        //hide current html
+        //build available blundle select
+        //listen for user to click 'load'
+        //call updateRootAndSubs(selected_blundle_id)
+        //hide blundle select html
+        //show queue ui
+        
+      }); 
     
     $('#create_new_bundle').click(function(e){
         $('#linqs').hide();
@@ -78,7 +90,7 @@ $(function(){
             <td><button id="remove_category">Remove Category</button></td>\
           </tr>');
           
-          $('.category_row').click(function(e){
+          $('.category_row').click(function(e){ //remove subfolder
             if(e.target.nodeName == 'BUTTON')
               $(this).remove();
           });
@@ -87,11 +99,21 @@ $(function(){
         $('#save_bundle').click(function(e){
           $('.category_row').each(function(index, row){
               $row = $(row);
-              window.categories.push($row.find('.subfolder_name').val()); 
-              //_bg.log(window.categories[index]);
+              //window.categoies holds names of this bundle's subfolders
+              window.categories.push({name: $row.find('.subfolder_name').val()}); 
             });
             
-            //create root in bookmarks bar (for now)
+            //create root in 'other bookmarks' (for now)
+            chrome.bookmarks.create({title: $('input#new_bundle_name').val()}, function(blundle){
+              if(typeof blundle.id != 'undefined') {
+                //create category folder underneth root
+                for(var i = 0; i < window.categories.length; i++){
+                  chrome.bookmarks.create({parentId: blundle.id, title: window.categories[i].name});
+                  }
+              }
+                
+            
+            });
             //get root id
             //for each index in categories array, create subfolder under root
           
@@ -207,22 +229,22 @@ $(function(){
 			_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
 		}
 	});
-    //updates possible subs when new root is selected
-    $('#root_folder').change(function(){
-        _bg._rootFolderId = $('#root_folder option:selected').val();
-        _bg._popupRootfolderState = $('#root_folder option:selected').val();
+  
+  function updateRootAndSubs(newRoot){
+    _bg._rootFolderId = newRoot;
+    _bg._popupRootfolderState = newRoot;
 		var _subfolderText = '';
-        //create subfolder select
-        var option = {text:''};
-        _bg.traverseTree(_bg.window.rootTree,-1000,option,_bg._rootFolderId);
+    //create subfolder select
+    var option = {text:''};
+    _bg.traverseTree(_bg.window.rootTree,-1000,option,_bg._rootFolderId);
 		//if there are subfolders
-        if(option.text != ''){
-			_subfolderText = '<select id="subfolder_select"> \
-							<option value="' + _bg._rootFolderId + '">Root</option>';
-			_subfolderText += option.text;
-			_subfolderText += '</select>';
-			_bg._subFolders = _subfolderText;
-        }
+    if(option.text != ''){
+      _subfolderText = '<select id="subfolder_select"> \
+              <option value="' + _bg._rootFolderId + '">Root</option>';
+      _subfolderText += option.text;
+      _subfolderText += '</select>';
+      _bg._subFolders = _subfolderText;
+    }
 		  //if there aren't subfolders
 		else{
 			_bg._subFolders = '';
@@ -236,10 +258,15 @@ $(function(){
 				queueObj.subfolder = _bg._rootFolderId;
 				//_bg.log('root for ' + $(link).find('.link').text() + ' is ' + queueObj.subfolder);
 		});
-		
-        //so every link row gets a select, selector is class not id
-        $('.subfolder_div').html(_bg._subFolders);
-      });
+    
+    //so every link row gets a select, selector is class not id
+    $('.subfolder_div').html(_bg._subFolders);
+  }
+  
+    //updates possible subs when new root is selected
+    $('#root_folder').change(function(){
+        updateRootAndSubs($('#root_folder option:selected').val())}
+        );
     
 	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
