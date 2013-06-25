@@ -18,6 +18,7 @@ var _contentScriptURL = "";
 var _contentScriptText = "";
 var _folders = '';
 var _subFolders = '';
+var _blundles = '';
 var _rootFolderId = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
@@ -260,6 +261,31 @@ function traverseTree(tree, level, option, searchId){
       if(typeof tree[i].children != 'undefined') {
         traverseTree(tree[i].children, level+1, option, searchId);
         }
+  }
+}
+
+function getBlundlesFromTree(tree, option){
+    var isBlundle = false;
+    for(var i = 0; i < tree.length; i++){
+      //check for .blundle file
+      if(typeof tree[i].children != 'undefined') {
+        for(var o = 0, node = tree[i].children; o < node.length; o++) {
+            if(node[o].title == '.blundle') {
+              log('blundle found.');
+              isBlundle = true;
+              break;
+            }
+          }
+        }
+      //only adding if .blundle file is present    
+      if(typeof tree[i].url == 'undefined' && tree[i].title != '' && isBlundle == true) {
+        option.text += '<option value="' + tree[i].id + '">' + tree[i].title + '</option>';
+      }
+      
+      if(typeof tree[i].children != 'undefined') {
+        getBlundlesFromTree(tree[i].children, option);
+        }
+      isBlundle = false;
   }
 }
 

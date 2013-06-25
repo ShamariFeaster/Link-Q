@@ -61,7 +61,34 @@ $(function(){
         //call updateRootAndSubs(selected_blundle_id)
         //hide blundle select html
         //show queue ui
+        var option = {text: ''};
+        if(_bg.window.rootTree == null)
+          _bg.createBookmarkTreeSelect();
+        _bg.getBlundlesFromTree(_bg.window.rootTree, option);
+        _bg._blundles = '<select id="blundles_select">';
+        _bg._blundles += option.text;
+        _bg._blundles += '</select>';
+        $('#linqs').hide();
+        $('#root_folder').hide();
+        var loadBundleHtml = '<tr id="available_blundles">\
+                                <td>' + _bg._blundles + '</td> \
+                                <td><button id="mount_blundle">Load Blundle</button></td> \
+                             </tr>\
+                             <tr>\
+                                <td><button id="back_to_linqs2">Back</button></td>\
+                             </tr>';
+        $('#load_bundle_gui').html(loadBundleHtml); 
+        $('#load_bundle_gui').show();
         
+        $('#back_to_linqs2').unbind(); //prevents multiple bindings
+        
+        //switches back to bundle edit mode
+        $('#back_to_linqs2').click(function(e){
+            _bg.log('Clicked'); 
+            $('#load_bundle_gui').hide();
+            $('#linqs').show();
+            $('#root_folder').show();
+          });
       }); 
     
     $('#create_new_bundle').click(function(e){
@@ -110,6 +137,9 @@ $(function(){
                 for(var i = 0; i < window.categories.length; i++){
                   chrome.bookmarks.create({parentId: blundle.id, title: window.categories[i].name});
                   }
+                //create .blundle file
+                var blundleInfo = "http://blundle.com?created=" + new Date().getTime();
+                chrome.bookmarks.create({parentId: blundle.id, title: '.blundle', url: blundleInfo});
               }
                 
             
@@ -123,6 +153,7 @@ $(function(){
         $('#back_to_linqs').click(function(e){
             _bg.log('Clicked'); 
             $('#new_bundle_gui').hide();
+            $('#load_bundle_gui').hide();
             $('#new_subfolders_input').remove();
             $('#linqs').show();
             $('#root_folder').show();
