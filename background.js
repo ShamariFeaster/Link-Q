@@ -264,6 +264,36 @@ function traverseTree(tree, level, option, searchId){
   }
 }
 
+function isThisBlundle(tree, parentId){
+    //console.log('starting at id ' + parentId);
+    var isBlundle = 0;
+    var parent;
+    for(var i = 0; i < tree.length; i++){
+      parent = tree[i].title;
+      //check for .blundle file
+      if(typeof tree[i].children != 'undefined') {
+        for(var o = 0, node = tree[i].children; o < node.length; o++) {
+            //log('looking at ' + node[o].title + ' under ' + parent + ' <br> ' + node[o].parentId + ' == ' + parentId);
+            if(node[o].title == '.blundle' && node[o].parentId == parentId) {
+              log('FOUND: ' + node[o].title + ' under ' + parent + ' ' + node[o].parentId + ' == ' + parentId);
+              
+              isBlundle = 1;
+              break;
+            }
+          }
+        }
+
+      
+      if(typeof tree[i].children != 'undefined') {
+        //log('going into ' + tree[i].children[0].title);
+        isBlundle += isThisBlundle(tree[i].children, parentId);
+        }
+      
+  }
+  console.log('returning ' + isBlundle);
+  return isBlundle;
+}
+
 function getBlundlesFromTree(tree, option){
     var isBlundle = false;
     for(var i = 0; i < tree.length; i++){

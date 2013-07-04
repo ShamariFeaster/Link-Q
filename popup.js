@@ -296,8 +296,13 @@ $(function(){
   
     //updates possible subs when new root is selected
     $('#root_folder').change(function(){
-        updateRootAndSubs($('#root_folder option:selected').val())}
-        );
+        updateRootAndSubs($('#root_folder option:selected').val())
+        var isBlundle = _bg.isThisBlundle(_bg.window.rootTree, $('#root_folder option:selected').val());
+        if(isBlundle == true)
+          _bg.log($('#root_folder option:selected').text() + ' is a blundle');
+        else
+          _bg.log($('#root_folder option:selected').text() + ' is not a blundle');
+        });
     
 	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
