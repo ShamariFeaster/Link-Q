@@ -6,7 +6,8 @@ function init(){
 
 $(function(){
   _bg = chrome.extension.getBackgroundPage();  
-  
+  if(_bg.window.rootTree == null)
+    _bg.createBookmarkTreeSelect();
   var content = "";
   var linkText = "";
   var url = "";
@@ -62,8 +63,6 @@ $(function(){
         //hide blundle select html
         //show queue ui
         var option = {text: ''};
-        if(_bg.window.rootTree == null)
-          _bg.createBookmarkTreeSelect();
         _bg.getBlundlesFromTree(_bg.window.rootTree, option);
         _bg._blundles = '<select id="blundles_select">';
         _bg._blundles += option.text;

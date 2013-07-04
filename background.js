@@ -140,6 +140,10 @@ function openLink(queueObj, openIfEmpty){
   
   }
 
+chrome.runtime.onStartup.addListener(function() {
+  log('extension started');
+  });
+
 //Tab Closed Listener
 chrome.tabs.onRemoved.addListener(
 	function( closedTabId , removeInfo){
