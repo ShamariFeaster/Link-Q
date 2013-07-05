@@ -8,6 +8,7 @@ TODO: Random access of queue using popup and notification of addition to queue
 				*/
 				
 var _pages = Array();
+var _loadedBlundle = Array();
 var _tabId = null; //this is the tab where the queue _pages will be displayed
 var _tab = null;
 var _tabOpen = false;
@@ -20,6 +21,7 @@ var _folders = '';
 var _subFolders = '';
 var _blundles = '';
 var _rootFolderId = '';
+var _blundleCategories = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
 

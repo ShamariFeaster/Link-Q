@@ -88,6 +88,27 @@ $(function(){
             $('#linqs').show();
             $('#root_folder').show();
           });
+          
+        //creates blundle category select
+        $('#mount_blundle').click(function(e){
+            _bg.log('Blundle Load Clicked'); 
+            var option = {text: ''};
+            //_bg.log($('#blundles_select option:selected').val());
+            _bg.traverseTree(_bg.window.rootTree, -1000, option, $('#blundles_select option:selected').val());
+            if(option.text == ''){
+              _bg._blundleCategories = '';
+            }else{
+              _bg._blundleCategories = '<select id="blundle_categories">';
+              _bg._blundleCategories += option.text;
+              _bg._blundleCategories += '</select>';
+            }
+            
+            $('#load_bundle_gui').hide(); //hide loading gui
+            $('#loaded_blundle_gui').html(_bg._blundleCategories);
+            $('#loaded_blundle_gui').append('<button id="back_to_">Back</button>');
+            $('#loaded_blundle_gui').show();
+            //_bg.log(_bg._blundleCategories);
+          });  
       }); 
     
     $('#create_new_bundle').click(function(e){
@@ -121,7 +142,7 @@ $(function(){
               $(this).remove();
           });
         });
-    
+      
         $('#save_bundle').click(function(e){
           $('.category_row').each(function(index, row){
               $row = $(row);
@@ -182,6 +203,9 @@ $(function(){
       
       });
     //this was put in div, so I can get/set button text by getting the html of div
+    /* 7/3/13 BUG: renaming makes it crash for some reason. NOT RESOLVED
+     * 
+     * */
 	$('div.rename').click(function(e){
         var url = $(this).attr('id');
 		var $parent = $(this);
@@ -233,7 +257,11 @@ $(function(){
 			$(link).remove();
 		});
 	});	
-  //saves pinned links to bundle  
+  //saves pinned links to bundle
+  /* 7/3/13 BUG: only putting first pinned item in category. NOT RESOLVED
+   * Suspecting: text or url may be empty
+   * Try: printing out mark properties beofre saving and tracing loop
+   * */  
 	$('button#save_pinned').click(function(e){
 		var mark = null;
 		var queue = _bg._pages;
