@@ -1,7 +1,7 @@
 var _bg = null;
-var __subfolderText = '';
+var _subfolderText = '';
 window.categories = Array();
-
+var _enumUi = {linkStaging:1, blundleCreate:2, blundleSelect:3 ,blundleMounted:4};
 function init(){
 
 $(function(){
@@ -12,61 +12,80 @@ $(function(){
   var linkText = "";
   var url = "";
   var pinned = "";
-  if(_bg._pages.length > 0){
-    for(var i = 0; i < _bg._pages.length; i++){
-        /*if link has no text then e put the website name in queue
-         * note: this doesn't work with pictures that do have text between
-         * a tags that is html. Need work around
-        */
-        if(_bg._pages[i].text.length == 0) {
-          url = _bg._pages[i].url.replace(/(http:\/\/|https:\/\/)/, "");
-          linkText = url.substr(0, url.indexOf('/'));
-        } else {
-          linkText = _bg._pages[i].text;
-          }
-        pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
-        content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
-        <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
-        <td><td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
-		<td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
-      }
-    $('#linqs').html(content);
-    
-
+  switch(_bg.getUiState()){
+    case _enumUi.linkStaging:
+      setupLinkStaging();
+      break;
+    case _enumUi.blundleSelect:
+      setupSelectBlundle();
+      break;
+    case _enumUi.blundleCreate:
+      setupNewBlundle();
+      break;
+    case _enumUi.blundleMounted:
+      break;
+    }
+  
+     
       
-  } else  {
-    $('#linqs').text('No Links In Queue');
+    function setupLinkStaging(){
+      _bg.setUiState(_enumUi.linkStaging);
+      if(_bg._pages.length > 0){
+        for(var i = 0; i < _bg._pages.length; i++){
+            /*if link has no text then e put the website name in queue
+             * note: this doesn't work with pictures that do have text between
+             * a tags that is html. Need work around
+            */
+            if(_bg._pages[i].text.length == 0) {
+              url = _bg._pages[i].url.replace(/(http:\/\/|https:\/\/)/, "");
+              linkText = url.substr(0, url.indexOf('/'));
+            } else {
+              linkText = _bg._pages[i].text;
+              }
+            pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
+            content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
+            <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
+            <td><td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
+        <td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
+          }
+        $('#linqs').html(content);
+      } else  {  
+        $('#linqs').text('No Links In Queue');
+      }
+      //display root folder select
+      $('#root_folder').html('\
+                <tr>\
+                    <td>'+_bg._folders+'</td>\
+                    <td><button id="empty_queue">Clear Queue</button></td>\
+                </tr> \
+                <tr>\
+                    <td><button id="save_pinned">Save Pinned</button></td> \
+                    <td><button id="create_new_bundle">New Bundle</button></td>\
+                    <td><button id="load_bundle">Load Bundle</button></td>\
+                    </tr>'
+        );  
+      
+      //reinstating saved root folder state
+      if(_bg._popupRootfolderState != ''){
+        $('#folder_select').val(_bg._popupRootfolderState); //#folder_select is in _bg_folders html
+      }
+      
+      $('#create_new_bundle').click(function(e){
+        setupNewBlundle();
+      });
+      
+      $('#load_bundle').click(function(e){
+        setupSelectBlundle(); 
+      });
     }
-    
-    //display root folder select
-    $('#root_folder').html('\
-              <tr>\
-                  <td>'+_bg._folders+'</td>\
-                  <td><button id="empty_queue">Clear Queue</button></td>\
-              </tr> \
-							<tr>\
-                  <td><button id="save_pinned">Save Pinned</button></td> \
-                  <td><button id="create_new_bundle">New Bundle</button></td>\
-                  <td><button id="load_bundle">Load Bundle</button></td>\
-                  </tr>');  
-    
-    //reinstating saved root folder state
-    if(_bg._popupRootfolderState != ''){
-      $('#folder_select').val(_bg._popupRootfolderState); //#folder_select is in _bg_folders html
-    }
-    
-    $('#load_bundle').click(function(e){
-        //hide current html
-        //build available blundle select
-        //listen for user to click 'load'
-        //call updateRootAndSubs(selected_blundle_id)
-        //hide blundle select html
-        //show queue ui
+    function setupSelectBlundle(){
+      _bg.setUiState(_enumUi.blundleSelect);
         var option = {text: ''};
         _bg.getBlundlesFromTree(_bg.window.rootTree, option);
         _bg._blundles = '<select id="blundles_select">';
         _bg._blundles += option.text;
         _bg._blundles += '</select>';
+        
         $('#linqs').hide();
         $('#root_folder').hide();
         var loadBundleHtml = '<tr id="available_blundles">\
@@ -77,13 +96,18 @@ $(function(){
                                 <td><button id="back_to_linqs2">Back</button></td>\
                              </tr>';
         $('#load_bundle_gui').html(loadBundleHtml); 
+        //reinstating previous blundle selected state
+        if(_bg._popupBlundleSelectedState != ''){
+          $('#blundles_select').val(_bg._popupBlundleSelectedState); 
+        }
         $('#load_bundle_gui').show();
         
         $('#back_to_linqs2').unbind(); //prevents multiple bindings
         
         //switches back to bundle edit mode
         $('#back_to_linqs2').click(function(e){
-            _bg.log('Clicked'); 
+            setupLinkStaging();
+            _bg.log('Going back to link staging'); 
             $('#load_bundle_gui').hide();
             $('#linqs').show();
             $('#root_folder').show();
@@ -91,7 +115,9 @@ $(function(){
           
         //creates blundle category select
         $('#mount_blundle').click(function(e){
-            _bg.log('Blundle Load Clicked'); 
+            _bg.log('Blundle Lodddad Clicked'); 
+            _bg.setUiState(_enumUi.blundleMounted);
+            _bg.emptyLoadedBlundleArray();
             var option = {text: ''};
             //_bg.log($('#blundles_select option:selected').val());
             _bg.traverseTree(_bg.window.rootTree, -1000, option, $('#blundles_select option:selected').val());
@@ -104,16 +130,33 @@ $(function(){
             }
             
             $('#load_bundle_gui').hide(); //hide loading gui
-            $('#loaded_blundle_gui').html(_bg._blundleCategories);
-            $('#loaded_blundle_gui').append('<button id="back_to_">Back</button>');
+            $('#loaded_blundle_categories').html(_bg._blundleCategories);
+            //reinstating previous category state
+            if(_bg._popupMountedBlundleCategoryState != ''){
+              $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
+            }
+            //populating blundle queue
+            $('#blundle_categories option').each(function(index, category){
+              _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
+              });
+            var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
+            $('#loaded_blundle_linqs').html(links);
+            $('#loaded_blundle_menu').html('<button id="back_to_">Back</button>');
             $('#loaded_blundle_gui').show();
-            //_bg.log(_bg._blundleCategories);
-          });  
-      }); 
+
+            $('button.blundleLink').click(function(e){
+               var url = $(this).data('url');
+               _bg.log('blundleLink clicked' );
+               _bg.openLinkFromBlundle(url);
+              });
+            
+          }); 
+      }
     
-    $('#create_new_bundle').click(function(e){
-        $('#linqs').hide();
-         $('#root_folder').hide();
+    function setupNewBlundle(){
+      _bg.setUiState(_enumUi.blundleCreate);
+      $('#linqs').hide();
+      $('#root_folder').hide();
         var newBundleHtml = '<tr id="new_subfolders_input">\
                                 <td>Bundle: </td><td><input id="new_bundle_name" type="text" size="20"></textarea></td> \
                                 <td><button id="add_subfolder">Add Category</button></td> \
@@ -171,28 +214,51 @@ $(function(){
     
         //switches back to bundle edit mode
         $('#back_to_linqs').click(function(e){
-            _bg.log('Clicked'); 
-            $('#new_bundle_gui').hide();
-            $('#load_bundle_gui').hide();
-            $('#new_subfolders_input').remove();
-            $('#linqs').show();
+            _bg.log('Going back to link staging from blundle create'); 
+            setupLinkStaging();
+            $('#new_bundle_gui').hide();_bg.log('1');
+            //$('#new_subfolders_input').remove();_bg.log('3');
             $('#root_folder').show();
-          });  
-      });
+            $('#linqs').show();
+          });
+      }
+    
+    /* returns DOM with filtered links as buttons
+     * */
+    function filterLinksInQueue(/*Array*/queue, /*int*/categoryId){
+        var buttons = '';
+        //_bg.log('hello');
+        for(var i = 0; i < queue.length; i++){
+          _bg.log(queue[i].parentId + categoryId);
+          if(!queue[i].url == '' && queue[i].parentId == categoryId){ //only links, no folders
+            buttons += '<button class="blundleLink" data-url="' + queue[i].url + '">' + queue[i].title + '</button>';
+          }
+        }
+        return buttons;
+      }
+    
+    
+      
+    
     
     
     
     //reinstating subfolder state
     //TODO: dont do this unecessaraly, consider flag of some sort
-    $('#linqs tr').each(function(index, link){
-        var url = $(link).find('.link').attr('id');
-        var queueObj = _bg.getFromQueue(url);
-        if(queueObj.subfolder != ''){
-          $(link).find('#subfolder_select').val(queueObj.subfolder);
-        }
-        
+    if(_bg.getUiState() == _enumUi.linkStaging){
+      _bg.log('reinstating links');
+      $('#linqs tr').each(function(index, link){
+          var url = $(link).find('.link').attr('id');
+          var queueObj = _bg.getFromQueue(url);
+          if(queueObj.subfolder != ''){
+            $(link).find('#subfolder_select').val(queueObj.subfolder);
+          }
+          
         });
-    //open link
+    }
+    
+    
+    //open link from staging area
     $('button.link').click(function(e){
       var id = $(this).attr('id');
       _bg._lastUrl = _bg._currentUrl;
@@ -200,8 +266,8 @@ $(function(){
       if(_bg._lastUrl != _bg._currentUrl && _bg._tabOpen){
         _bg.removeFromQueue(_bg._lastUrl);
         }
-      
       });
+      
     //this was put in div, so I can get/set button text by getting the html of div
     /* 7/3/13 BUG: renaming makes it crash for some reason. NOT RESOLVED
      * 
@@ -276,6 +342,7 @@ $(function(){
 			}
 		}
 	});	
+  
 	//updates subfolder property of mark when new sub selected
 	$('#linqs').change(function(){
 		var selectedValue = $(this).find('option:selected').val();
@@ -286,6 +353,12 @@ $(function(){
 			queueObj.subfolder = selectedValue;
 			_bg.log('\nId of selected subfolder: '+ queueObj.subfolder);
 		}
+	});
+  
+  //loaded_blundle_categories change handler
+  $('#loaded_blundle_categories').change(function(){
+      var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
+      $('#loaded_blundle_linqs').html(links);
 	});
   
   function updateRootAndSubs(newRoot){
@@ -320,7 +393,7 @@ $(function(){
     //so every link row gets a select, selector is class not id
     $('.subfolder_div').html(_bg._subFolders);
   }
-  
+
     //updates possible subs when new root is selected
     $('#root_folder').change(function(){
         updateRootAndSubs($('#root_folder option:selected').val())
@@ -330,7 +403,7 @@ $(function(){
         else
           _bg.log($('#root_folder option:selected').text() + ' is not a blundle');
         });
-    
+
 	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
 	  /*this may be unecessary because im saving subfolder state through
@@ -342,6 +415,24 @@ $(function(){
         var queueObj = _bg.getFromQueue(url);
         queueObj.subfolder = subfolder;
         });
+        
+       switch(_bg.getUiState()){
+        case _enumUi.linkStaging:
+          _bg._popupRootfolderState = $('#folder_select option:selected').val();
+          break;//END linkStaging
+        case _enumUi.blundleSelect:
+          _bg._popupBlundleSelectedState = $('#blundles_select option:selected').val();
+          break;
+        case _enumUi.blundleCreate:
+          //save blundle name and categories
+          break;
+        case _enumUi.blundleMounted:
+          _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
+          break;
+        } 
+        
+      
+      //_popupBlundleSelectedState
       });
     
     

@@ -1,4 +1,4 @@
-button.link {width: 100px; overflow: hidden; height: 35px;}
+button.link .blundleLink{width: 100px; overflow: hidden; height: 35px;}
 button.pin {width: 30px; height: 35px;}
 .pinned {background-color: red;}
 

@@ -8,7 +8,7 @@ TODO: Random access of queue using popup and notification of addition to queue
 				*/
 				
 var _pages = Array();
-var _loadedBlundle = Array();
+var _loadedBlundleQueue = Array();
 var _tabId = null; //this is the tab where the queue _pages will be displayed
 var _tab = null;
 var _tabOpen = false;
@@ -24,12 +24,14 @@ var _rootFolderId = '';
 var _blundleCategories = '';
 var _currentUrl = ""; //for saving state
 var _lastUrl = "";
+var _currentUi = 1;
 
 window.rootTree = null; //global
 
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
-
+var _popupBlundleSelectedState = '';
+var _popupMountedBlundleCategoryState = '';
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
                                        "id": "Link-Q"});
@@ -140,7 +142,34 @@ function openLink(queueObj, openIfEmpty){
 			console.log('if failed, removing tab');
 	}
   
-  }
+}
+
+function openLinkFromBlundle(url){
+    console.log('blundleQueue length: '+ _loadedBlundleQueue.length);
+    console.log('opening ' + url);
+      var numTabs = 0;
+      if(_tabId == null) {
+        chrome.tabs.create({url : url}, function(tab){
+          _tabId = tab.id;
+          _tabOpen = true;
+          _tab = tab;
+          chrome.tabs.move(_tabId, {index: -1});
+          console.log('creating new tab. tab position: ' +  _tab.index);
+        });
+        
+      } else if(_tabOpen){
+        console.log('tab is active');
+        chrome.tabs.update(_tabId, {url: url});
+        
+      } else if(!_tabOpen){
+        chrome.tabs.create({url : url, index : numTabs}, function(tab){
+          _tabId = tab.id;
+          _tabOpen = true;
+          _tab = tab;
+          chrome.tabs.move(_tabId, {index: -1});
+        });
+      }
+}
 
 chrome.runtime.onStartup.addListener(function() {
   log('extension started');
@@ -244,9 +273,12 @@ function objToString(obj){
   return a;
   }
 
+function emptyLoadedBlundleArray(){_loadedBlundleQueue.length = 0;}
 
 //now this can list subfolders when passed 'searchId' of parent
-function traverseTree(tree, level, option, searchId){
+//ONLY LISTS FOLDERS, return semantics: options list 
+//option = {text:''}
+function traverseTree(tree, level, option, searchId){ 
     var space = '';
     if(level > -1) {
       for(var x = 0; x < level; x++){
@@ -266,6 +298,67 @@ function traverseTree(tree, level, option, searchId){
       }
       if(typeof tree[i].children != 'undefined') {
         traverseTree(tree[i].children, level+1, option, searchId);
+        }
+  }
+}
+//adds filtering by mark type (folders or links) when searching
+//like it's predecessor it builds options list for html select
+function traverseTreeV2(tree, level, option, searchId, onlyShowFolders){ 
+    log(searchId);
+    var space = '';
+    if(level > -1) {
+      for(var x = 0; x < level; x++){
+        space += '.';
+      }
+    }
+    for(var i = 0; i < tree.length; i++){
+      if(tree[i].title != '') {
+        //if search, only add children of searchId
+        if(searchId != '' ) {
+            //only show links
+            if(!onlyShowFolders && typeof tree[i].url != 'undefined' && searchId == tree[i].parentId){
+              option.text += '<option value="' + tree[i].id + '">' + space + tree[i].title + '</option>';
+            }
+            //only show folder  
+            else if(onlyShowFolders && typeof tree[i].url == 'undefined' && searchId == tree[i].parentId){
+              log('WHY?');
+              option.text += '<option value="' + tree[i].id + '">' + space + tree[i].title + '</option>';
+              }
+          }else {
+            option.text += '<option value="' + tree[i].id + '">' + space + tree[i].title + '</option>';
+            }
+        
+      }
+      if(typeof tree[i].children != 'undefined') {
+        traverseTreeV2(tree[i].children, level+1, option, searchId, onlyShowFolders);
+        }
+  }
+}
+/*option = Array();
+ * This is used to pull links out of blundles and push them onto
+ * option. 
+*/
+function traverseTreeV3(tree, option, searchId, onlyShowFolders){ 
+    
+    for(var i = 0; i < tree.length; i++){
+      if(tree[i].title != '') {
+        //if search, only add children of searchId
+        if(searchId != '' ) {
+            //only show links
+            if(!onlyShowFolders && typeof tree[i].url != 'undefined' && searchId == tree[i].parentId){
+              option.push({'title' : tree[i].title, 'url' : tree[i].url, 'id' : tree[i].id, 'parentId' : tree[i].parentId});
+            }
+            //only show folder  
+            else if(onlyShowFolders && typeof tree[i].url == 'undefined' && searchId == tree[i].parentId){
+              option.push({'title' : tree[i].title, 'url' : '', 'id' : tree[i].id, 'parentId' : tree[i].parentId});
+              }
+          }else {
+            log('traverseTreeV3 didnt run. no searchId given');
+            }
+        
+      }
+      if(typeof tree[i].children != 'undefined') {
+        traverseTreeV3(tree[i].children, option, searchId, onlyShowFolders);
         }
   }
 }
@@ -340,3 +433,9 @@ function createBookmarkTreeSelect(){
   }
 
 function log(msg) {console.log(msg)};
+
+function setUiState(newUiState){
+  _currentUi = newUiState;
+  }
+  
+function getUiState(){return _currentUi}
