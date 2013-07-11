@@ -4,7 +4,7 @@
 				articles to a queue for later viewing without bookmarking
 				or opening tabs.
 				
-TODO: Random access of queue using popup and notification of addition to queue				
+TODO: Notification of addition to queue				
 				*/
 				
 var _pages = Array();

@@ -1,3 +1,10 @@
+/*
+ * 7/9/13 - 
+ * ISSUES: 
+ *    blundleCreate:
+ *      1. need to save state when switching away and reinstate when coming back
+ * */
+
 var _bg = null;
 var _subfolderText = '';
 window.categories = Array();
@@ -26,11 +33,11 @@ $(function(){
       break;
     }
   
-     
-      
     function setupLinkStaging(){
       _bg.setUiState(_enumUi.linkStaging);
+      content = '';
       if(_bg._pages.length > 0){
+
         for(var i = 0; i < _bg._pages.length; i++){
             /*if link has no text then e put the website name in queue
              * note: this doesn't work with pictures that do have text between
@@ -71,13 +78,16 @@ $(function(){
       }
       
       $('#create_new_bundle').click(function(e){
+        saveLinkStageState();
         setupNewBlundle();
       });
       
       $('#load_bundle').click(function(e){
+        saveLinkStageState();
         setupSelectBlundle(); 
       });
     }
+    
     function setupSelectBlundle(){
       _bg.setUiState(_enumUi.blundleSelect);
         var option = {text: ''};
@@ -106,11 +116,13 @@ $(function(){
         
         //switches back to bundle edit mode
         $('#back_to_linqs2').click(function(e){
+            _bg.log('going back to link staging from blundle loading');
             setupLinkStaging();
             _bg.log('Going back to link staging'); 
             $('#load_bundle_gui').hide();
             $('#linqs').show();
             $('#root_folder').show();
+            reinstateLinkSubfolders();
           });
           
         //creates blundle category select
@@ -216,10 +228,11 @@ $(function(){
         $('#back_to_linqs').click(function(e){
             _bg.log('Going back to link staging from blundle create'); 
             setupLinkStaging();
-            $('#new_bundle_gui').hide();_bg.log('1');
-            //$('#new_subfolders_input').remove();_bg.log('3');
+            $('#new_bundle_gui').hide();
+            $('#new_subfolders_input').remove();
             $('#root_folder').show();
             $('#linqs').show();
+            reinstateLinkSubfolders();
           });
       }
     
@@ -244,19 +257,21 @@ $(function(){
     
     
     //reinstating subfolder state
-    //TODO: dont do this unecessaraly, consider flag of some sort
-    if(_bg.getUiState() == _enumUi.linkStaging){
-      _bg.log('reinstating links');
-      $('#linqs tr').each(function(index, link){
-          var url = $(link).find('.link').attr('id');
-          var queueObj = _bg.getFromQueue(url);
-          if(queueObj.subfolder != ''){
-            $(link).find('#subfolder_select').val(queueObj.subfolder);
-          }
-          
-        });
+    function reinstateLinkSubfolders(){
+      if(_bg.getUiState() == _enumUi.linkStaging){ //<--This test is most linkely unecessary
+        _bg.log('reinstating links');
+        $('#linqs tr').each(function(index, link){
+            var url = $(link).find('.link').attr('id');
+            var queueObj = _bg.getFromQueue(url);
+            if(queueObj.subfolder != ''){
+              $(link).find('#subfolder_select').val(queueObj.subfolder);
+            }
+            
+          });
+      }
     }
     
+    reinstateLinkSubfolders();
     
     //open link from staging area
     $('button.link').click(function(e){
@@ -404,17 +419,20 @@ $(function(){
           _bg.log($('#root_folder option:selected').text() + ' is not a blundle');
         });
 
-	//when popup is closed, cleanup stuff
-    $(window).bind("unload", function() { 
-	  /*this may be unecessary because im saving subfolder state through
-	  events in the function above, leaving it for now since it's an optimization 
-	  to remove it - want to continue*/
+  function saveLinkStageState(){
       $('#linqs tr').each(function(index, link){
         var url = $(link).find('.link').attr('id');
         var subfolder = $(link).find('#subfolder_select').val();
+        _bg.log('saving link index ' + index + ' as ' + subfolder);
         var queueObj = _bg.getFromQueue(url);
         queueObj.subfolder = subfolder;
         });
+    }
+
+	//when popup is closed, cleanup stuff
+    $(window).bind("unload", function() { 
+      _bg.log('unloading');
+      saveLinkStageState();
         
        switch(_bg.getUiState()){
         case _enumUi.linkStaging:
