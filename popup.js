@@ -2,12 +2,16 @@
  * 7/9/13 - 
  * ISSUES: 
  *    blundleCreate:
- *      1. need to save state when switching away and reinstate when coming back
+ *      1. need to reload tree when created so user can immediately use the new blundle
+ * 
+ *    blundleMounted
+ *      1. Crashes on unload after mount
  * */
 
 var _bg = null;
 var _subfolderText = '';
 window.categories = Array();
+
 var _enumUi = {linkStaging:1, blundleCreate:2, blundleSelect:3 ,blundleMounted:4};
 function init(){
 
@@ -179,23 +183,25 @@ $(function(){
                              </tr>';
         $('#new_bundle_gui').html(newBundleHtml); //maybe not working because id's aren't visible, 
         $('#new_bundle_gui').show();
-
+        reinstateNewBlundleState();
          $('#add_subfolder').unbind(); //prevent mutiple action due to duplicate handlers
          $('#back_to_linqs').unbind();
          $('.category_row').unbind();
-         
+          
+         $('.category_row').click(function(e){ //remove subfolder
+            if(e.target.nodeName == 'BUTTON')
+              $(this).remove();
+          });
+           
         //handlers for adding and removing subfolder rows 
         $('#add_subfolder').click(function(e){
-          $('#new_subfolders_input').after('\
+          $('.new_blundle_categories').last().append('\
           <tr class="category_row">\
             <td>Category: </td><td><input class="subfolder_name" type="text" size="20"></textarea></td>\
             <td><button id="remove_category">Remove Category</button></td>\
           </tr>');
           
-          $('.category_row').click(function(e){ //remove subfolder
-            if(e.target.nodeName == 'BUTTON')
-              $(this).remove();
-          });
+          
         });
       
         $('#save_bundle').click(function(e){
@@ -227,9 +233,10 @@ $(function(){
         //switches back to bundle edit mode
         $('#back_to_linqs').click(function(e){
             _bg.log('Going back to link staging from blundle create'); 
+            saveNewBlundleState();
             setupLinkStaging();
-            $('#new_bundle_gui').hide();
             $('#new_subfolders_input').remove();
+            $('#new_bundle_gui').hide();
             $('#root_folder').show();
             $('#linqs').show();
             reinstateLinkSubfolders();
@@ -429,6 +436,35 @@ $(function(){
         });
     }
 
+  function saveNewBlundleState(){
+    _bg.log('saving new blundle state ' + $('#new_bundle_name').val());
+      _bg._newBlundleState.name = $('#new_bundle_name').val();
+      _bg._newBlundleState.categories.length = 0;
+      $('tr.category_row').each(function(index, row){
+          $subfolderField = $(row).find('input.subfolder_name');
+          _bg._newBlundleState.categories.push($subfolderField.val());
+          row.remove();
+        });
+        _bg.log('leaving save new blundle state and length is ' + _bg._newBlundleState.categories.length);
+      
+    }
+    
+    function reinstateNewBlundleState(){
+      _bg.log('reinstating new blundle state ' + _bg._newBlundleState.categories.length);
+      $('#new_bundle_name').val(_bg._newBlundleState.name);
+      
+      for(var x = 0; x < _bg._newBlundleState.categories.length;x++){
+        _bg.log(_bg._newBlundleState.categories[x] + ' ');
+        $('.new_blundle_categories').last().append('\
+          <tr class="category_row">\
+            <td>Category: </td><td><input class="subfolder_name" type="text" size="20"></textarea></td>\
+            <td><button id="remove_category">Remove Category</button></td>\
+          </tr>');
+        }
+        $('input.subfolder_name').each(function(index, category){
+          $(category).val(_bg._newBlundleState.categories[index]);
+        });
+      }
 	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
       _bg.log('unloading');
@@ -442,7 +478,7 @@ $(function(){
           _bg._popupBlundleSelectedState = $('#blundles_select option:selected').val();
           break;
         case _enumUi.blundleCreate:
-          //save blundle name and categories
+          saveNewBlundleState();
           break;
         case _enumUi.blundleMounted:
           _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();

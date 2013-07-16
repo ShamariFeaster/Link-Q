@@ -9,6 +9,7 @@ TODO: Notification of addition to queue
 				
 var _pages = Array();
 var _loadedBlundleQueue = Array();
+var _newBlundleState = {name:'',categories:new Array()};
 var _tabId = null; //this is the tab where the queue _pages will be displayed
 var _tab = null;
 var _tabOpen = false;
