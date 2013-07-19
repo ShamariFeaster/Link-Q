@@ -5,7 +5,9 @@
  *      1. need to reload tree when created so user can immediately use the new blundle
  * 
  *    blundleMounted
- *      1. Crashes on unload after mount
+ *      1. Crashes on unload after mount (FIXED)
+ *      2. after mounted, then unload, next load shows empty blundle (FIXED)
+ *      3. back buttons don't work (FIXED)
  * */
 
 var _bg = null;
@@ -34,6 +36,7 @@ $(function(){
       setupNewBlundle();
       break;
     case _enumUi.blundleMounted:
+      setupMountedBlundleState(_bg._popupMountedBlundleState);
       break;
     }
   
@@ -132,41 +135,60 @@ $(function(){
         //creates blundle category select
         $('#mount_blundle').click(function(e){
             _bg.log('Blundle Lodddad Clicked'); 
-            _bg.setUiState(_enumUi.blundleMounted);
-            _bg.emptyLoadedBlundleArray();
-            var option = {text: ''};
-            //_bg.log($('#blundles_select option:selected').val());
-            _bg.traverseTree(_bg.window.rootTree, -1000, option, $('#blundles_select option:selected').val());
-            if(option.text == ''){
-              _bg._blundleCategories = '';
-            }else{
-              _bg._blundleCategories = '<select id="blundle_categories">';
-              _bg._blundleCategories += option.text;
-              _bg._blundleCategories += '</select>';
-            }
-            
-            $('#load_bundle_gui').hide(); //hide loading gui
-            $('#loaded_blundle_categories').html(_bg._blundleCategories);
-            //reinstating previous category state
-            if(_bg._popupMountedBlundleCategoryState != ''){
-              $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
-            }
-            //populating blundle queue
-            $('#blundle_categories option').each(function(index, category){
-              _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
-              });
-            var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
-            $('#loaded_blundle_linqs').html(links);
-            $('#loaded_blundle_menu').html('<button id="back_to_">Back</button>');
-            $('#loaded_blundle_gui').show();
-
-            $('button.blundleLink').click(function(e){
-               var url = $(this).data('url');
-               _bg.log('blundleLink clicked' );
-               _bg.openLinkFromBlundle(url);
-              });
+            setupMountedBlundleState($('#blundles_select option:selected').val());
             
           }); 
+      }
+    
+    function setupMountedBlundleState(blundleToMount){
+      _bg.setUiState(_enumUi.blundleMounted);
+      _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
+      _bg.emptyLoadedBlundleArray();
+      $('#back_to_blundle_select').unbind();
+      $('#blundle_categories').unbind();
+      var option = {text: ''};
+      //_bg.log($('#blundles_select option:selected').val());
+      _bg.traverseTree(_bg.window.rootTree, -1000, option, blundleToMount);
+      if(option.text == ''){
+        _bg._blundleCategories = '';
+      }else{
+        _bg._blundleCategories = '<select id="blundle_categories">';
+        _bg._blundleCategories += option.text;
+        _bg._blundleCategories += '</select>';
+      }
+      
+      _bg._blundleCategories = (_bg._blundleCategories == '')? 'This Blundle Is Empty' : _bg._blundleCategories;
+      
+      $('#load_bundle_gui').hide(); //hide loading gui
+      $('#loaded_blundle_categories').html(_bg._blundleCategories);
+      //reinstating previous category state
+      if(_bg._popupMountedBlundleCategoryState != ''){
+        $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
+      }
+      //populating blundle queue
+      $('#blundle_categories option').each(function(index, category){
+        _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
+        });
+      var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
+      
+      $('#loaded_blundle_linqs').html(links);
+      $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button>');
+      $('#loaded_blundle_gui').show();
+
+      $('button.blundleLink').click(function(e){
+         var url = $(this).data('url');
+         _bg.log('blundleLink clicked' );
+         _bg.openLinkFromBlundle(url);
+        });
+        
+        $('#back_to_blundle_select').click(function(){
+          $('#loaded_blundle_gui').hide();
+          setupSelectBlundle();
+          });
+          
+        $('#blundle_categories').change(function(){
+          _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
+          });
       }
     
     function setupNewBlundle(){
@@ -383,6 +405,9 @@ $(function(){
       $('#loaded_blundle_linqs').html(links);
 	});
   
+  /*This is the callback when new root is chosen from link staging
+   * Its primary function is to create subfolder selects for
+   * each link*/
   function updateRootAndSubs(newRoot){
     _bg._rootFolderId = newRoot;
     _bg._popupRootfolderState = newRoot;
@@ -481,7 +506,6 @@ $(function(){
           saveNewBlundleState();
           break;
         case _enumUi.blundleMounted:
-          _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
           break;
         } 
         

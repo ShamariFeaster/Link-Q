@@ -32,6 +32,7 @@ window.rootTree = null; //global
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
 var _popupBlundleSelectedState = '';
+var _popupMountedBlundleState = '';
 var _popupMountedBlundleCategoryState = '';
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
