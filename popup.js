@@ -2,12 +2,17 @@
  * 7/9/13 - 
  * ISSUES: 
  *    blundleCreate:
- *      1. need to reload tree when created so user can immediately use the new blundle
+ *      1. need to reload tree when created so user can immediately use the new blundle (FIXED)
  * 
  *    blundleMounted
  *      1. Crashes on unload after mount (FIXED)
  *      2. after mounted, then unload, next load shows empty blundle (FIXED)
  *      3. back buttons don't work (FIXED)
+ *      
+ *    linkStaging
+ *      1. Pinning not working until popup is reloaded
+ *      2. When Blundle loaded this need only to show links from loaded blundle
+ *         and a way to unmount it
  * */
 
 var _bg = null;
@@ -134,7 +139,7 @@ $(function(){
           
         //creates blundle category select
         $('#mount_blundle').click(function(e){
-            _bg.log('Blundle Lodddad Clicked'); 
+            _bg.log('Blundle Load Clicked'); 
             setupMountedBlundleState($('#blundles_select option:selected').val());
             
           }); 
@@ -195,7 +200,8 @@ $(function(){
       _bg.setUiState(_enumUi.blundleCreate);
       $('#linqs').hide();
       $('#root_folder').hide();
-        var newBundleHtml = '<tr id="new_subfolders_input">\
+        var newBundleHtml = '<tr><td><div id="new_blundle_save_status"></div></td></tr> \
+                            <tr id="new_subfolders_input">\
                                 <td>Bundle: </td><td><input id="new_bundle_name" type="text" size="20"></textarea></td> \
                                 <td><button id="add_subfolder">Add Category</button></td> \
                                 <td><button id="save_bundle">Save This Bundle</button></td>\
@@ -210,11 +216,6 @@ $(function(){
          $('#back_to_linqs').unbind();
          $('.category_row').unbind();
           
-         $('.category_row').click(function(e){ //remove subfolder
-            if(e.target.nodeName == 'BUTTON')
-              $(this).remove();
-          });
-           
         //handlers for adding and removing subfolder rows 
         $('#add_subfolder').click(function(e){
           $('.new_blundle_categories').last().append('\
@@ -222,7 +223,11 @@ $(function(){
             <td>Category: </td><td><input class="subfolder_name" type="text" size="20"></textarea></td>\
             <td><button id="remove_category">Remove Category</button></td>\
           </tr>');
-          
+         
+         $('.category_row').click(function(e){ //remove subfolder
+            if(e.target.nodeName == 'BUTTON')
+              $(this).remove();
+          }); 
           
         });
       
@@ -230,23 +235,49 @@ $(function(){
           $('.category_row').each(function(index, row){
               $row = $(row);
               //window.categoies holds names of this bundle's subfolders
-              window.categories.push({name: $row.find('.subfolder_name').val()}); 
+              if($row.find('.subfolder_name').val())
+                window.categories.push({name: $row.find('.subfolder_name').val()}); 
             });
             
             //create root in 'other bookmarks' (for now)
             chrome.bookmarks.create({title: $('input#new_bundle_name').val()}, function(blundle){
+
+              var blundleObj = {};
+              blundleObj.blundleName = $('input#new_bundle_name').val();
+              blundleObj.categories = [];
+              blundleObj.created = new Date().getTime();
+              
               if(typeof blundle.id != 'undefined') {
                 //create category folder underneth root
                 for(var i = 0; i < window.categories.length; i++){
                   chrome.bookmarks.create({parentId: blundle.id, title: window.categories[i].name});
+                  blundleObj.categories.push(window.categories[i].name);
                   }
+
                 //create .blundle file
-                var blundleInfo = "http://blundle.com?created=" + new Date().getTime();
-                chrome.bookmarks.create({parentId: blundle.id, title: '.blundle', url: blundleInfo});
+                var encodedBlundle = encodeURIComponent(JSON.stringify(blundleObj)),
+                    blundleInfo = "http://blundle.com?info=" + encodedBlundle;
+                //send blundle JSON to server here
+                chrome.bookmarks.create({parentId: blundle.id, title: '.blundle', url: blundleInfo}, function(){
+                    _bg.createBookmarkTreeSelect(); //reload tree to show this blundle
+                    
+                    //clear new blundle interface
+                    $('input#new_bundle_name').val('');
+                    $('.category_row').each(function(index, row){
+                      $(row).remove();
+                      });
+                    //Indicate blundle saved  
+                    $('#new_blundle_save_status').hide();
+                    $('#new_blundle_save_status').text('Blundle Saved');
+                    $('#new_blundle_save_status').fadeIn().delay(500).fadeOut(1500);
+                  });
+                
               }
                 
             
             });
+            
+            
             //get root id
             //for each index in categories array, create subfolder under root
           
@@ -381,10 +412,11 @@ $(function(){
 				chrome.bookmarks.create({parentId: mark.subfolder, title: mark.text, url: mark.url }, function(node){
 					if(typeof node.id != 'undefined')
 						_bg.log('Bookmark was made');
-				
+            _bg.createBookmarkTreeSelect();
 				});
 			}
 		}
+    
 	});	
   
 	//updates subfolder property of mark when new sub selected
