@@ -16,22 +16,22 @@
   },
   "commands": {
     "queue-forward": {
-      "suggested_key": { "default":"Ctrl+Shift+F",
-                        "windows": "Ctrl+Shift+F", 
-                        "mac": "Command+Shift+F" },
+      "suggested_key": { "default":"Alt+Q",
+                        "windows": "Alt+Q", 
+                        "mac": "Alt+Q" },
       "description": "Load Next Page In Queue"
     },
 	"hover-add": {
-      "suggested_key": { "default":"Ctrl+Shift+A",
-                        "windows": "Ctrl+Shift+A", 
-                        "mac": "Command+Shift+A" },
+      "suggested_key": { "default":"Alt+A",
+                        "windows": "Alt+A", 
+                        "mac": "Alt+A" },
       "description": "Add Link You're Hovering Over To Queue"
     }
   },"content_scripts": [
     {
       "matches": ["http://*/*","https://*/*"],
       "js": ["jquery.js","core.js"],
-      "run_at": "document_end",
+      "run_at": "document_start",
       "all_frames": true
     }
   ],

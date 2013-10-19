@@ -28,15 +28,37 @@ var _lastUrl = "";
 var _currentUi = 1;
 
 window.rootTree = null; //global
+window.port = null;
 
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
 var _popupBlundleSelectedState = '';
 var _popupMountedBlundleState = '';
 var _popupMountedBlundleCategoryState = '';
+
+chrome.runtime.onConnect.addListener(function(port) {
+  console.log('channel open');
+  window.port = port;
+  _currentTabId = port.sender.tab.id;
+  console.log("onConnect _currentTabId: " + _currentTabId);
+  port.onMessage.addListener(function(msg) {
+	  _hovering = msg.hovering;
+      _contentScriptURL = msg.hoverURL;
+      _contentScriptText = msg.linkText;
+      //backup way for getting vurrent tab semantics
+      _currentTabTitle = port.sender.tab.title; //could be undefined
+      
+      
+  });
+});
+
+
+
 // Create context item for links
   var id = chrome.contextMenus.create({"title": 'Add To Link-Q', "contexts":['link'],
                                        "id": "Link-Q"});
+                                       
+                                       
  //Add Context Menu Option To Add To Queue
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	//console.log('url: '+info.linkUrl );
@@ -62,14 +84,18 @@ chrome.commands.onCommand.addListener(function(command) {
 
 	if (command == "hover-add") {
 			console.log('hover Add');
+			console.log("hover Add _currentTabId: " + _currentTabId);
 			if(_hovering){
 				_pages.push({'text' : _contentScriptText, 'url' : _contentScriptURL, 'pinned': false, 'subfolder':'1'});
-				if(window.rootTree == null)
-				  createBookmarkTreeSelect();
 				console.log('pushed ' + _contentScriptURL + ' onto queue');
+				window.port.postMessage({output: true, pageName: _contentScriptText});
+				
+				if(window.rootTree == null)
+					createBookmarkTreeSelect();
 				
 			}//to add the current page 
       else{
+		  console.log("no hover _currentTabId: " + _currentTabId);
         chrome.tabs.get(_currentTabId, function(tab){
           if(window.rootTree == null)
             createBookmarkTreeSelect();
@@ -78,16 +104,18 @@ chrome.commands.onCommand.addListener(function(command) {
            *     from the 'sender' object
            * 2 - or we use the current tab's url*/  
           if(typeof _currentTabTitle == 'undefined')
-            _currentTabTitle = tab.url;
+            _currentTabTitle = tab.title;
           else if(_currentTabTitle == ''){
-            _currentTabTitle = tab.url;
+            _currentTabTitle = tab.title;
             }
           log('Trying to add current page, url is: ' + tab.url + ' title is: ' + _currentTabTitle);
+         
           _pages.push({'text' : _currentTabTitle, 'url' : tab.url, 'pinned': false, 'subfolder':'1'});
+          window.port.postMessage({output: true, pageName: _currentTabTitle});
           });
 
         }
-		}
+	}
     /*The idea here is to not pop off the queue until we move to
      * the next mark, allowing user to pin and save from the popup*/
 		if (command == "queue-forward") {
@@ -197,20 +225,6 @@ chrome.tabs.onActivated.addListener(function(tab) {
   _currentTabId = tab.tabId;
   _currentTabTitle = tab.title; //could be undefined
 });
-
-
-//Hover Message Listener (From Content Script)
-chrome.runtime.onMessage.addListener(
-	function(request, sender, sendResponse) {
-      _hovering = request.hovering;
-      _contentScriptURL = request.hoverURL;
-      _contentScriptText = request.linkText;
-      //backup way for getting vurrent tab semantics
-      _currentTabTitle = sender.tab.title; //could be undefined
-
-      sendResponse({response: "Hover URL Received"});
-    
-  });
 
 function /*Queue Object*/removeFromQueue(url){
 	var tempArr = Array();
