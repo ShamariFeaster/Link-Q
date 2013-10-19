@@ -1,8 +1,9 @@
 jQuery(function(){
 	$('body').prepend('<div id="notification" style="background-color:white;\
 													 border:2px solid red;position:absolute;\
-													 width:100px;\
-													 height:50px;left:-110px;top:0px;"></div>');
+													 \
+													 height:50px;left:-110px;top:0px;\
+													 z-index:1000;"></div>');
 													 
 	//otification will appear at the top of the page	
 	$(window).scroll(function(){
@@ -27,9 +28,9 @@ jQuery(function(){
 	port.onMessage.addListener(function(msg) {
 		if(msg.output ==true) {
 			console.log('output is true');
-			$('#notification').stop(true, true).text('"' + msg.pageName + '" Has Been Added To Your Streme').
+			$('#notification').stop(true, true).text('"' + msg.pageName + '" Has Been Added To Your Streme').css({width:$('#notification').width()}).
 				animate({left: 0},'fast').delay(1500).
-				animate({left: -110},'fast');
+				animate({left: -$('#notification').width()},'fast').css({width:$('#notification').width()});
 			}
 		
 		});
