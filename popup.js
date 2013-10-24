@@ -94,6 +94,7 @@ $(function(){
         setupNewBlundle();
       });
       
+      
       $('#load_bundle').click(function(e){
         saveLinkStageState();
         setupSelectBlundle(); 
@@ -102,11 +103,13 @@ $(function(){
     
     function setupSelectBlundle(){
       _bg.setUiState(_enumUi.blundleSelect);
+
         var option = {text: ''};
         _bg.getBlundlesFromTree(_bg.window.rootTree, option);
         _bg._blundles = '<select id="blundles_select">';
         _bg._blundles += option.text;
         _bg._blundles += '</select>';
+
         
         $('#linqs').hide();
         $('#root_folder').hide();
@@ -149,7 +152,7 @@ $(function(){
       _bg.setUiState(_enumUi.blundleMounted);
       _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
       _bg.emptyLoadedBlundleArray();
-      window.blundleLoaded = false;
+      window.blundleLoaded = true;
       
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
@@ -313,15 +316,24 @@ $(function(){
     /* returns DOM with filtered links as buttons
      * */
     function filterLinksInQueue(/*Array*/queue, /*int*/categoryId){
-        var buttons = '';
+        var content = '';
+        var pinned = '';
         //_bg.log('hello');
         for(var i = 0; i < queue.length; i++){
           _bg.log(queue[i].parentId + categoryId);
           if(!queue[i].url == '' && queue[i].parentId == categoryId){ //only links, no folders
-            buttons += '<button class="blundleLink" data-url="' + queue[i].url + '">' + queue[i].title + '</button>';
+            //buttons += '<button class="blundleLink" data-url="' + queue[i].url + '">' + queue[i].title + '</button>';
+            pinned = (queue[i].pinned) ? 'pinned' : "";
+            content += '<tr><td><button class="link" id="' + queue[i].url + '">' + queue[i].title + '</button></td> \
+                          <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + queue[i].url + '_pin">Pin</button></td> \
+                          <td><td><div class="rename" id="' + queue[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
+                        </tr>';
           }
         }
-        return buttons;
+        return content;
+        
+        
+        
       }
     
     

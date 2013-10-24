@@ -29,7 +29,6 @@ var _currentUi = 1;
 
 window.rootTree = null; //global
 window.port = null;
-window.blundleLoaded = false;
 
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';
@@ -363,11 +362,11 @@ function traverseTreeV3(tree, option, searchId, onlyShowFolders){
         if(searchId != '' ) {
             //only show links
             if(!onlyShowFolders && typeof tree[i].url != 'undefined' && searchId == tree[i].parentId){
-              option.push({'title' : tree[i].title, 'url' : tree[i].url, 'id' : tree[i].id, 'parentId' : tree[i].parentId});
+              option.push({'title' : tree[i].title, 'url' : tree[i].url, 'id' : tree[i].id, 'parentId' : tree[i].parentId, 'pinned' : false, 'subfolder' : tree[i].parentId});
             }
             //only show folder  
             else if(onlyShowFolders && typeof tree[i].url == 'undefined' && searchId == tree[i].parentId){
-              option.push({'title' : tree[i].title, 'url' : '', 'id' : tree[i].id, 'parentId' : tree[i].parentId});
+              option.push({'title' : tree[i].title, 'url' : '', 'id' : tree[i].id, 'parentId' : tree[i].parentId, 'pinned' : false, 'subfolder' : tree[i].parentId});
               }
           }else {
             log('traverseTreeV3 didnt run. no searchId given');
