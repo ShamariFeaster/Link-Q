@@ -29,6 +29,7 @@ var _currentUi = 1;
 
 window.rootTree = null; //global
 window.port = null;
+window.blundleLoaded = false;
 
 var _popupSubfolderState = '';
 var _popupRootfolderState = '';

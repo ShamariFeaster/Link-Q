@@ -3,7 +3,7 @@ jQuery(function(){
 													 border:2px solid red;position:absolute;\
 													 \
 													 height:50px;left:-110px;top:0px;\
-													 z-index:1000;"></div>');
+													 z-index:1000;"></div><span id="test"></span>');
 													 
 	//otification will appear at the top of the page	
 	$(window).scroll(function(){
@@ -26,8 +26,8 @@ jQuery(function(){
     var port = chrome.runtime.connect({name: "channel-hover"});
 	
 	port.onMessage.addListener(function(msg) {
-		if(msg.output ==true) {
-			console.log('output is true');
+		if(msg.output == true) {
+			$('#test').text(msg.pageName + ' has been added');
 			$('#notification').stop(true, true).text('"' + msg.pageName + '" Has Been Added To Your Streme').css({width:$('#notification').width()}).
 				animate({left: 0},'fast').delay(1500).
 				animate({left: -$('#notification').width()},'fast').css({width:$('#notification').width()});
@@ -45,6 +45,7 @@ jQuery(function(){
 				
 			});
 			*/
+			//console.log('body: ' + $('body').offset().left);
 			port.postMessage({hoverURL: this.href, linkText: $(this).text(), hovering: true});
 		}
 		

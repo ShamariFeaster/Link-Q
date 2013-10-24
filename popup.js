@@ -149,20 +149,26 @@ $(function(){
       _bg.setUiState(_enumUi.blundleMounted);
       _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
       _bg.emptyLoadedBlundleArray();
+      window.blundleLoaded = false;
+      
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
       var option = {text: ''};
       //_bg.log($('#blundles_select option:selected').val());
+      
+      var btnUnmountBlundle = '<button id="unmount_blundle">Unload Blundle</button>';
+      
       _bg.traverseTree(_bg.window.rootTree, -1000, option, blundleToMount);
       if(option.text == ''){
         _bg._blundleCategories = '';
       }else{
-        _bg._blundleCategories = '<select id="blundle_categories">';
+        _bg._blundleCategories = btnUnmountBlundle + '<select id="blundle_categories">';
         _bg._blundleCategories += option.text;
         _bg._blundleCategories += '</select>';
       }
       
-      _bg._blundleCategories = (_bg._blundleCategories == '')? 'This Blundle Is Empty' : _bg._blundleCategories;
+      
+      _bg._blundleCategories = (_bg._blundleCategories == '') ? 'This Blundle Is Empty' : _bg._blundleCategories;
       
       $('#load_bundle_gui').hide(); //hide loading gui
       $('#loaded_blundle_categories').html(_bg._blundleCategories);
@@ -193,6 +199,14 @@ $(function(){
           
         $('#blundle_categories').change(function(){
           _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
+          });
+          
+        $('#unmount_blundle').click(function(){
+            _bg._blundleCategories = '';
+             _bg._popupMountedBlundleCategoryState = '';
+            $('#loaded_blundle_gui').hide();
+            setupSelectBlundle();
+            
           });
       }
     

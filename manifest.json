@@ -26,6 +26,11 @@
                         "windows": "Alt+A", 
                         "mac": "Alt+A" },
       "description": "Add Link You're Hovering Over To Queue"
+    },
+    "_execute_browser_action": { 
+        "suggested_key": { "default":"Alt+Z",
+                        "windows": "Alt+Z", 
+                        "mac": "Alt+Z" }
     }
   },"content_scripts": [
     {
