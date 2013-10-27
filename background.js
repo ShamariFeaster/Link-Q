@@ -276,8 +276,21 @@ function /*Queue Object*/ getFromQueue(url){
       else
         continue;
       }
-      
-      
+	}
+}
+
+function /*Queue Object*/ getFromBlundleQueue(url){
+	for(var i = 0; i < _loadedBlundleQueue.length; i++){
+		if(url != '') {
+      if(_loadedBlundleQueue[i].url == url) {
+        return _loadedBlundleQueue[i];
+      }
+    } else {
+      if(_loadedBlundleQueue[i].pinned == false)
+        return _pages[i];
+      else
+        continue;
+      }
 	}
 }
 
@@ -289,7 +302,14 @@ function objToString(obj){
   return a;
   }
 
-function emptyLoadedBlundleArray(){_loadedBlundleQueue.length = 0;}
+function emptyLoadedBlundleArray(){
+  log('emptying queue');
+  while(_loadedBlundleQueue.length > 0){
+		_loadedBlundleQueue.pop();
+    //log('queue length now: ' + _loadedBlundleQueue.length);
+	} 
+  
+  }
 
 //now this can list subfolders when passed 'searchId' of parent
 //ONLY LISTS FOLDERS, return semantics: options list 
@@ -362,6 +382,7 @@ function traverseTreeV3(tree, option, searchId, onlyShowFolders){
         if(searchId != '' ) {
             //only show links
             if(!onlyShowFolders && typeof tree[i].url != 'undefined' && searchId == tree[i].parentId){
+              //log(tree.length + ' searchId: ' + searchId + ' parentId: ' + tree[i].parentId);
               option.push({'title' : tree[i].title, 'url' : tree[i].url, 'id' : tree[i].id, 'parentId' : tree[i].parentId, 'pinned' : false, 'subfolder' : tree[i].parentId});
             }
             //only show folder  

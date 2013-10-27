@@ -64,7 +64,7 @@ $(function(){
             pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
             content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
             <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
-            <td><td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
+            <td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td>\
         <td><div class="subfolder_div">' + _bg._subFolders + '</div></td></tr>';
           }
         $('#linqs').html(content);
@@ -151,12 +151,16 @@ $(function(){
     function setupMountedBlundleState(blundleToMount){
       _bg.setUiState(_enumUi.blundleMounted);
       _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
+
       _bg.emptyLoadedBlundleArray();
+
       window.blundleLoaded = true;
       
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
+      $('#back_to_blundle_select').unbind();
       var option = {text: ''};
+      var optionsText = '';
       //_bg.log($('#blundles_select option:selected').val());
       
       var btnUnmountBlundle = '<button id="unmount_blundle">Unload Blundle</button>';
@@ -165,27 +169,36 @@ $(function(){
       if(option.text == ''){
         _bg._blundleCategories = '';
       }else{
-        _bg._blundleCategories = btnUnmountBlundle + '<select id="blundle_categories">';
-        _bg._blundleCategories += option.text;
-        _bg._blundleCategories += '</select>';
+        _bg._blundleCategories = '<select id="blundle_categories"></select>';
       }
       
-      
-      _bg._blundleCategories = (_bg._blundleCategories == '') ? 'This Blundle Is Empty' : _bg._blundleCategories;
+      _bg._blundleCategories = '<select id="blundle_categories"></select>';
+      //_bg._blundleCategories = (_bg._blundleCategories == '') ? 'This Blundle Is Empty' : _bg._blundleCategories;
       
       $('#load_bundle_gui').hide(); //hide loading gui
-      $('#loaded_blundle_categories').html(_bg._blundleCategories);
+     
+      $('#loaded_blundle_categories').html(btnUnmountBlundle + '<br>' + _bg._blundleCategories);
+      optionsText = option.text;
+      $('#blundle_categories').html(optionsText);
+      _bg._blundleCategories = $('#blundle_categories').html();
+      _bg.log('blundle cat: ' + $('#blundle_categories').html());
       //reinstating previous category state
       if(_bg._popupMountedBlundleCategoryState != ''){
         $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
+        
       }
       //populating blundle queue
       $('#blundle_categories option').each(function(index, category){
+        //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
         _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
+        
         });
+        _bg.log('length of queue: ' + _bg._loadedBlundleQueue.length);
       var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
-      
       $('#loaded_blundle_linqs').html(links);
+      //_bg.log($('#blundle_categories').html());
+      $('.blundle_subfolder_div').html('<select id="blundle_categories"></select>');
+      //_bg.log($('.blundle_subfolder_div').find('select').html(optionsText));
       $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button>');
       $('#loaded_blundle_gui').show();
 
@@ -202,15 +215,22 @@ $(function(){
           
         $('#blundle_categories').change(function(){
           _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
+          var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
+          $('#loaded_blundle_linqs').html(links);
+          updateBlundleRootAndSubs($('#blundle_categories option:selected').val());
+          //so every link row gets a select, selector is class not id
+          $('.blundle_subfolder_div').html(_bg._blundleCategories);
           });
           
         $('#unmount_blundle').click(function(){
             _bg._blundleCategories = '';
              _bg._popupMountedBlundleCategoryState = '';
+             window.blundleLoaded = false;
             $('#loaded_blundle_gui').hide();
             setupSelectBlundle();
             
           });
+
       }
     
     function setupNewBlundle(){
@@ -320,28 +340,20 @@ $(function(){
         var pinned = '';
         //_bg.log('hello');
         for(var i = 0; i < queue.length; i++){
-          _bg.log(queue[i].parentId + categoryId);
+          //_bg.log(queue[i].parentId + categoryId);
           if(!queue[i].url == '' && queue[i].parentId == categoryId){ //only links, no folders
             //buttons += '<button class="blundleLink" data-url="' + queue[i].url + '">' + queue[i].title + '</button>';
             pinned = (queue[i].pinned) ? 'pinned' : "";
             content += '<tr><td><button class="link" id="' + queue[i].url + '">' + queue[i].title + '</button></td> \
                           <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + queue[i].url + '_pin">Pin</button></td> \
-                          <td><td><div class="rename" id="' + queue[i].url + '"><button id="rename_button">Rename Mark</button></div></td></td>\
+                          <td><div class="rename" id="' + queue[i].url + '"><button id="rename_button">Rename Mark</button></div></td>\
+                          <td><div class="blundle_subfolder_div"></div></td>\
                         </tr>';
           }
         }
         return content;
-        
-        
-        
       }
-    
-    
-      
-    
-    
-    
-    
+  
     //reinstating subfolder state
     function reinstateLinkSubfolders(){
       if(_bg.getUiState() == _enumUi.linkStaging){ //<--This test is most linkely unecessary
@@ -459,8 +471,8 @@ $(function(){
   
   //loaded_blundle_categories change handler
   $('#loaded_blundle_categories').change(function(){
-      var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
-      $('#loaded_blundle_linqs').html(links);
+      //var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
+      //$('#loaded_blundle_linqs').html(links);
 	});
   
   /*This is the callback when new root is chosen from link staging
@@ -470,7 +482,7 @@ $(function(){
     _bg._rootFolderId = newRoot;
     _bg._popupRootfolderState = newRoot;
 		var _subfolderText = '';
-    //create subfolder select
+    //create subfolder select (TODO: PUT IN FUNCTION)
     var option = {text:''};
     _bg.traverseTree(_bg.window.rootTree,-1000,option,_bg._rootFolderId);
 		//if there are subfolders
@@ -499,6 +511,17 @@ $(function(){
     $('.subfolder_div').html(_bg._subFolders);
   }
 
+  function updateBlundleRootAndSubs(newCategory){
+		$('#loaded_blundle_linqs tr').each(function(index, link){
+				var url = $(link).find('.link').attr('id');
+				var queueObj = _bg.getFromBlundleQueue(url);
+				queueObj.subfolder = newCategory;
+				//_bg.log('root for ' + $(link).find('.link').text() + ' is ' + queueObj.subfolder);
+		});
+    
+  }
+  
+  
     //updates possible subs when new root is selected
     $('#root_folder').change(function(){
         updateRootAndSubs($('#root_folder option:selected').val())
