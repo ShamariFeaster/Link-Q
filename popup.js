@@ -178,8 +178,8 @@ $(function(){
       $('#load_bundle_gui').hide(); //hide loading gui
      
       $('#loaded_blundle_categories').html(btnUnmountBlundle + '<br>' + _bg._blundleCategories);
-      optionsText = option.text;
-      $('#blundle_categories').html(optionsText);
+
+      $('#blundle_categories').html(option.text);
       _bg._blundleCategories = $('#blundle_categories').html();
       _bg.log('blundle cat: ' + $('#blundle_categories').html());
       //reinstating previous category state
@@ -197,8 +197,8 @@ $(function(){
       var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
       $('#loaded_blundle_linqs').html(links);
       //_bg.log($('#blundle_categories').html());
-      $('.blundle_subfolder_div').html('<select id="blundle_categories"></select>');
-      //_bg.log($('.blundle_subfolder_div').find('select').html(optionsText));
+      $('.blundle_subfolder_div').html('<select class="blundle_categories"></select>');
+      $('.blundle_subfolder_div').find('select').html(option.text);
       $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button>');
       $('#loaded_blundle_gui').show();
 
@@ -218,9 +218,9 @@ $(function(){
           var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
           $('#loaded_blundle_linqs').html(links);
           updateBlundleRootAndSubs($('#blundle_categories option:selected').val());
-          //so every link row gets a select, selector is class not id
-          $('.blundle_subfolder_div').html(_bg._blundleCategories);
-          });
+          $('.blundle_subfolder_div').html('<select class="blundle_categories"></select>');
+          $('.blundle_subfolder_div').find('select').html(option.text);
+        });
           
         $('#unmount_blundle').click(function(){
             _bg._blundleCategories = '';
