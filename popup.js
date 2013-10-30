@@ -155,7 +155,7 @@ $(function(){
       _bg.emptyLoadedBlundleArray();
 
       window.blundleLoaded = true;
-      
+
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
       $('#back_to_blundle_select').unbind();
@@ -181,30 +181,55 @@ $(function(){
 
       $('#blundle_categories').html(option.text);
       _bg._blundleCategories = $('#blundle_categories').html();
-      _bg.log('blundle cat: ' + $('#blundle_categories').html());
+      //_bg.log('blundle cat: ' + $('#blundle_categories').html());
       //reinstating previous category state
       if(_bg._popupMountedBlundleCategoryState != ''){
         $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
         
       }
+      
       //populating blundle queue
       $('#blundle_categories option').each(function(index, category){
         //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
         _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
         
         });
-        _bg.log('length of queue: ' + _bg._loadedBlundleQueue.length);
+        
+      _bg.log('length of queue: ' + _bg._loadedBlundleQueue.length);
       var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
       $('#loaded_blundle_linqs').html(links);
       //_bg.log($('#blundle_categories').html());
       $('.blundle_subfolder_div').html('<select class="blundle_categories"></select>');
       $('.blundle_subfolder_div').find('select').html(option.text);
-      $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button>');
+      $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button><br>');
+      $('#loaded_blundle_menu').append('<button id="show_current_queue">Show Links Currently In Queue</button>');
       $('#loaded_blundle_gui').show();
-
+      var linkText = '',
+          url = '',
+          pinned = '',
+          content = '';
+          
+      for(var i = 0; i < _bg._pages.length; i++){
+        if(_bg._pages[i].text.length == 0) {
+          url = _bg._pages[i].url.replace(/(http:\/\/|https:\/\/)/, "");
+          linkText = url.substr(0, url.indexOf('/'));
+        } else {
+          linkText = _bg._pages[i].text;
+          }
+        pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
+        content += '<tr><td><button class="link" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
+                        <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
+                        <td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td>\
+                    <td><div class="subfolder_div">' + $('.blundle_subfolder_div').html() + '</div></td></tr>';
+      }
+      
+      $('#loaded_blundle_current_linqs').html(content);
+      $('#loaded_blundle_current_linqs').append('<button id="save_pinned_to_blundle">Save Pinned To This Blundle</button><br>');
+      
+        //EVENT HANDLERS
       $('button.blundleLink').click(function(e){
          var url = $(this).data('url');
-         _bg.log('blundleLink clicked' );
+         _bg.log('blundleLink clicked. opening ' + url);
          _bg.openLinkFromBlundle(url);
         });
         
@@ -230,8 +255,15 @@ $(function(){
             setupSelectBlundle();
             
           });
+          
+        $('#show_current_queue').click(function(){
+            //style="border:1px solid black;"
+          $('#loaded_blundle_current_linqs').show();
+          $('#loaded_blundle_current_linqs').css({'border' :'1px solid black', 'visibility' : 'visible'});  
+          
+          });
 
-      }
+      }//END MOUNTED BLUNDLE SETUP
     
     function setupNewBlundle(){
       _bg.setUiState(_enumUi.blundleCreate);
@@ -344,7 +376,7 @@ $(function(){
           if(!queue[i].url == '' && queue[i].parentId == categoryId){ //only links, no folders
             //buttons += '<button class="blundleLink" data-url="' + queue[i].url + '">' + queue[i].title + '</button>';
             pinned = (queue[i].pinned) ? 'pinned' : "";
-            content += '<tr><td><button class="link" id="' + queue[i].url + '">' + queue[i].title + '</button></td> \
+            content += '<tr><td><button class="blundleLink" data-url="'+ queue[i].url +'" id="' + queue[i].url + '">' + queue[i].title + '</button></td> \
                           <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + queue[i].url + '_pin">Pin</button></td> \
                           <td><div class="rename" id="' + queue[i].url + '"><button id="rename_button">Rename Mark</button></div></td>\
                           <td><div class="blundle_subfolder_div"></div></td>\
