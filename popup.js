@@ -47,6 +47,7 @@ $(function(){
   
     function setupLinkStaging(){
       _bg.setUiState(_enumUi.linkStaging);
+      $('button.pin').unbind();
       content = '';
       if(_bg._pages.length > 0){
 
@@ -98,6 +99,18 @@ $(function(){
       $('#load_bundle').click(function(e){
         saveLinkStageState();
         setupSelectBlundle(); 
+      });
+      
+      //pins mark
+    $('button.pin').click(function(e){
+        _bg.log('pin clicked');
+        var url = $(this).attr('id');
+        url =  url.replace('_pin', '');
+        if(_bg.togglePin(url) == true) {
+          $(this).toggleClass('pinned', true);
+        } else{
+          $(this).toggleClass('pinned', false);
+        }
       });
     }
     
@@ -164,6 +177,7 @@ $(function(){
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
       $('#back_to_blundle_select').unbind();
+      $('button.pin').unbind();
       var option = {text: ''};
       var optionsText = '';
       //_bg.log($('#blundles_select option:selected').val());
@@ -280,9 +294,19 @@ $(function(){
           });
 
           $('#loaded_blundle_current_linqs').change(function(){
-            _bg.log('check');
             updateCurrentLinkSubfolder();
             });
+            
+        $('button.pin').click(function(e){
+          _bg.log('pin clicked');
+          var url = $(this).attr('id');
+          url =  url.replace('_pin', '');
+          if(_bg.togglePin(url) == true) {
+            $(this).toggleClass('pinned', true);
+          } else{
+            $(this).toggleClass('pinned', false);
+          }
+        });
 
       }//END MOUNTED BLUNDLE SETUP
     
@@ -471,17 +495,9 @@ $(function(){
 			}
 
 		});
-	});
-    //pins mark
-    $('button.pin').click(function(e){
-        var url = $(this).attr('id');
-        url =  url.replace('_pin', '');
-        if(_bg.togglePin(url) == true) {
-          $(this).toggleClass('pinned', true);
-        } else{
-          $(this).toggleClass('pinned', false);
-        }
-      });
+	}); //END div.rename
+  
+    
     //clears queue
 	$('button#empty_queue').click(function(e){
 		_bg.emptyQueue();
@@ -494,7 +510,7 @@ $(function(){
    * Suspecting: text or url may be empty
    * Try: printing out mark properties beofre saving and tracing loop
    * */  
-	$('button#save_pinned').click(function(e){
+	$('button#save_pinned, button#save_pinned_to_blundle').click(function(e){
 		var mark = null;
 		var queue = _bg._pages;
 		for(var i = 0; i <= queue.length; i++){
