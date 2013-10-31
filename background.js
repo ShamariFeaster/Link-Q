@@ -287,7 +287,7 @@ function /*Queue Object*/ getFromBlundleQueue(url){
       }
     } else {
       if(_loadedBlundleQueue[i].pinned == false)
-        return _pages[i];
+        return _loadedBlundleQueue[i];
       else
         continue;
       }
