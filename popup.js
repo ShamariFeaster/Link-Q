@@ -41,7 +41,7 @@ $(function(){
       setupNewBlundle();
       break;
     case _enumUi.blundleMounted:
-      setupMountedBlundleState(_bg._popupMountedBlundleState);
+      setupMountedBlundleState(_bg._popupMountedBlundleState, false);
       break;
     }
   
@@ -79,7 +79,7 @@ $(function(){
                     <td><button id="empty_queue">Clear Queue</button></td>\
                 </tr> \
                 <tr>\
-                    <td><button id="save_pinned">Save Pinned</button></td> \
+                    <td><button id="save_pinned" value="linkstageMod">Save Pinned</button></td> \
                     <td><button id="create_new_bundle">New Bundle</button></td>\
                     <td><button id="load_bundle">Load Bundle</button></td>\
                     </tr>'
@@ -156,21 +156,20 @@ $(function(){
         //creates blundle category select
         $('#mount_blundle').click(function(e){
             _bg.log('Blundle Load Clicked'); 
-            setupMountedBlundleState($('#blundles_select option:selected').val());
+            setupMountedBlundleState($('#blundles_select option:selected').val(), false);
             
           }); 
       }
     
     function printHtml(id) {
-      _bg.log($('#' + id).html());
-      _bg.log('test');
+      _bg.log('########PRINT HTML OUTPUT FOR: ' + id);
+      _bg.log($(id).html());
+      _bg.log('########END HTML OUTPUT FOR: ' + id);
       }
     
-    function setupMountedBlundleState(blundleToMount){
+    function setupMountedBlundleState(blundleToMount, isReload){
       _bg.setUiState(_enumUi.blundleMounted);
       _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
-
-      _bg.emptyLoadedBlundleArray();
 
       window.blundleLoaded = true;
 
@@ -207,26 +206,28 @@ $(function(){
         
       }
       
-      //populating blundle queue
-      $('#blundle_categories option').each(function(index, category){
-        //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
-        _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
-        
-        });
-        
-      _bg.log('length of queue: ' + _bg._loadedBlundleQueue.length);
+      if(!isReload) {
+        _bg.emptyLoadedBlundleArray();
+        //populating blundle queue
+        $('#blundle_categories option').each(function(index, category){
+          //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
+          _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
+          
+          });
+      }
+      
+      _bg.log('length of queue: after traversial' + _bg._loadedBlundleQueue.length);
       var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
       $('#loaded_blundle_linqs').html(links);
       //_bg.log($('#blundle_categories').html());
       
-      $('.blundle_subfolder_div').html('<select class="blundle_categories"></select>');
-      $('.blundle_subfolder_div').find('select').html(option.text);
+      
       
       $('#loaded_blundle_menu').html('<button id="back_to_blundle_select">Back</button><br>');
-      $('#loaded_blundle_menu').append('<button id="show_current_queue">Show Links Currently In Queue</button>');
+      $('#loaded_blundle_menu').append('<button class="show_current" id="show_current_queue">Show Links Currently In Queue</button>');
       $('#loaded_blundle_gui').show();
       
-      //Display current queue
+      //DISPLAY CURRENT LINK QUEUE
       var linkText = '',
           url = '',
           pinned = '',
@@ -240,16 +241,34 @@ $(function(){
         } else {
           linkText = _bg._pages[i].text;
           }
+        
+        _bg._pages[i].subfolder = (typeof _bg._pages[i].subfolder == 'undefined') ? 
+                                  $('#blundle_categories option:selected').val() : _bg._pages[i].subfolder;
+        
+        _bg.log('link ' + i + '\'s subfolder is ' + _bg._pages[i].subfolder);  
+        
         pinned = (_bg._pages[i].pinned) ? 'pinned' : "";
         content += '<tr><td><button class="currentLink" id="' + _bg._pages[i].url + '">' + linkText + '</button></td> \
                         <td><button data-index="'+i+'" class="pin '+pinned+'" id="' + _bg._pages[i].url + '_pin">Pin</button></td> \
                         <td><div class="rename" id="' + _bg._pages[i].url + '"><button id="rename_button">Rename Mark</button></div></td>\
-                    <td><div class="subfolder_div">' + $('.blundle_subfolder_div').html() + '</div></td></tr>';
+                        <td><select id="current_link_blundle_categories"></select></td>\
+                    </tr>';
       }
       
       $('#loaded_blundle_current_linqs').html(content);
-      $('#loaded_blundle_current_linqs').append('<button id="save_pinned_to_blundle">Save Pinned To This Blundle</button><br>');
+      $('#loaded_blundle_current_linqs').append('\
+        <button id="save_pinned_to_blundle" value="blundleMod">Save Pinned To This Blundle</button><br>');
       
+      
+      
+      //PUT CATEGORY SELECTS ON CURRENT LINKS
+       $('#loaded_blundle_current_linqs tr').each(function(index,row){
+        $row = $(row);
+        $row.find('#current_link_blundle_categories').html(option.text);
+        //_bg.log('_bg._pages[index].subfolder: ' + _bg._pages[index].subfolder);
+        $row.find('#current_link_blundle_categories').val(_bg._pages[index].subfolder);
+       });
+
         //EVENT HANDLERS
       $('button.blundleLink').click(function(e){
          var url = $(this).data('url');
@@ -287,13 +306,23 @@ $(function(){
           
         $('#show_current_queue').click(function(){
             //style="border:1px solid black;"
-          $('#loaded_blundle_current_linqs').show();
+            if($('#show_current_queue').hasClass('show_current')){
+              $('#loaded_blundle_current_linqs').show();
+              $('#show_current_queue').text('Hide Links Currently In Queue');
+              $('#show_current_queue').toggleClass('show_current');
+            }else{
+              $('#loaded_blundle_current_linqs').hide();
+              $('#show_current_queue').text('Show Links Currently In Queue');
+              $('#show_current_queue').toggleClass('show_current');
+            }
+              
+          
           $('#loaded_blundle_current_linqs').css({'border' :'1px solid black', 'visibility' : 'visible'});  
           
           //printHtml('loaded_blundle_gui');
           });
 
-          $('#loaded_blundle_current_linqs').change(function(){
+          $('#loaded_blundle_current_linqs tr').change(function(){
             updateCurrentLinkSubfolder();
             });
             
@@ -519,7 +548,12 @@ $(function(){
 				chrome.bookmarks.create({parentId: mark.subfolder, title: mark.text, url: mark.url }, function(node){
 					if(typeof node.id != 'undefined')
 						_bg.log('Bookmark was made');
-            _bg.createBookmarkTreeSelect();
+            if(e.target.value == 'blundleMod'){
+              _bg.log('Size: ' + _bg._loadedBlundleQueue.length +' New Size: ' + 
+                _bg._loadedBlundleQueue.push({'title' : node.title, 'url' : node.url, 'id' : node.id, 'parentId' : node.parentId , 'pinned' : false, 'subfolder' : node.parentId})
+              );
+              setupMountedBlundleState(_bg._popupMountedBlundleState, true);//reload blundle modification interface
+              }
 				});
 			}
 		}
@@ -596,8 +630,8 @@ $(function(){
 		$('#loaded_blundle_current_linqs tr').each(function(index, link){ //traverse rows of current links
 				var url = $(link).find('.currentLink').attr('id');
 				var queueObj = _bg.getFromQueue(url);
-				queueObj.subfolder = $(link).find('.blundle_categories option:selected').val();
-				//_bg.log('root for ' + $(link).find('.currentLink').text() + ' is ' + queueObj.subfolder);
+				queueObj.subfolder = $(link).find('#current_link_blundle_categories option:selected').val();
+				_bg.log('root for ' + $(link).find('.currentLink').text() + ' is ' + queueObj.subfolder);
 		});
     
   } 
@@ -654,10 +688,11 @@ $(function(){
 	//when popup is closed, cleanup stuff
     $(window).bind("unload", function() { 
       _bg.log('unloading');
-      saveLinkStageState();
+      
         
        switch(_bg.getUiState()){
         case _enumUi.linkStaging:
+          saveLinkStageState();
           _bg._popupRootfolderState = $('#folder_select option:selected').val();
           break;//END linkStaging
         case _enumUi.blundleSelect:

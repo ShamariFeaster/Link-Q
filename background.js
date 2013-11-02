@@ -226,6 +226,12 @@ chrome.tabs.onActivated.addListener(function(tab) {
   _currentTabTitle = tab.title; //could be undefined
 });
 
+//BOOKMARK EVENT LISTENERS
+chrome.bookmarks.onRemoved.addListener(function(id, changeInfo){
+  log('EVENT: bookmarks have been removed. Reloading tree');
+  createBookmarkTreeSelect();
+});
+
 function /*Queue Object*/removeFromQueue(url){
 	var tempArr = Array();
   var queueObj = null;
