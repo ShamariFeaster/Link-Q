@@ -249,6 +249,22 @@ function /*Queue Object*/removeFromQueue(url){
 
 }
 
+function /*Queue Object*/removeFromBlundle(url){
+	var tempArr = Array();
+  var queueObj = null;
+	for(var i = 0; i < _loadedBlundleQueue.length; i++){
+    //push all that arent url, unless url is pinned
+		if(_loadedBlundleQueue[i].url != url) {
+			tempArr.push(_loadedBlundleQueue[i]);
+		} else {
+      queueObj = _loadedBlundleQueue[i];
+      console.log('removed ' + _loadedBlundleQueue[i].url);
+      }
+	}
+	_loadedBlundleQueue = tempArr;
+  return queueObj;
+}
+
 function emptyQueue(){
   while(_pages.length){
 		_pages.pop();
@@ -269,6 +285,23 @@ function /*void*/togglePin(url){
 		} 
 	}
 }
+
+function /*void*/toggleBlundlePin(url){
+	for(var i = 0; i < _loadedBlundleQueue.length; i++){
+		if(_loadedBlundleQueue[i].url == url) {
+      log(_loadedBlundleQueue[i]);
+			if(_loadedBlundleQueue[i].pinned == false) {
+        _loadedBlundleQueue[i].pinned = true;  
+        return true;
+      }
+      else {
+        _loadedBlundleQueue[i].pinned = false;
+        return false;
+      }
+		} 
+	}
+}
+
 //if url is '', returns the first non-pinned item
 function /*Queue Object*/ getFromQueue(url){
 	for(var i = 0; i < _pages.length; i++){

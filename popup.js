@@ -168,6 +168,10 @@ $(function(){
       }
     
     function setupMountedBlundleState(blundleToMount, isReload){
+      if(!isReload)
+        _bg.log('setupMountedBlundleState called NOT a reload');
+      else
+        _bg.log('setupMountedBlundleState called IS a reload');
       _bg.setUiState(_enumUi.blundleMounted);
       _bg._popupMountedBlundleState = blundleToMount; //save mounted blundle state
 
@@ -176,14 +180,29 @@ $(function(){
       $('#back_to_blundle_select').unbind();
       $('#blundle_categories').unbind();
       $('#back_to_blundle_select').unbind();
-      $('button.pin').unbind();
+      //$('button.pin').unbind();
       var option = {text: ''};
       var optionsText = '';
       //_bg.log($('#blundles_select option:selected').val());
       
-      var btnUnmountBlundle = '<button id="unmount_blundle">Unload Blundle</button>';
+      var btnUnmountBlundle = '<button id="unmount_blundle">Unload Blundle</button>\
+                               <button id="remove_pinned_links">Remove Pinned Links</button>';
       
+      if(!isReload)
+        _bg.emptyLoadedBlundleArray();
+        
+      //Tree is reloaded right after save, it's not reloaded quick enough though!!!!!
       _bg.traverseTree(_bg.window.rootTree, -1000, option, blundleToMount);
+      
+      _bg.log('Waiting for options to load');  
+      for(var i = 0;i < 100000000;i++){
+        if(option.text == '')
+          continue;
+        else
+          break;
+      }
+      _bg.log('Options loaded');
+          
       if(option.text == ''){
         _bg._blundleCategories = '';
       }else{
@@ -198,22 +217,39 @@ $(function(){
       $('#loaded_blundle_categories').html(btnUnmountBlundle + '<br>' + _bg._blundleCategories);
 
       $('#blundle_categories').html(option.text);
+      
+      //populating blundle queue
+      if(!isReload){
+        $('#blundle_categories option').each(function(index, category){
+          //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
+          _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
+          var currSize = 0;
+          var sameSizeCtr = 1;
+          _bg.log('Waiting for array to load from ' + $(category).val());  
+          for(var i = 0;i < 10000000;i++){
+            if(_bg._loadedBlundleQueue.length == currSize){ //Make This wait for array size to be maxed
+              
+              if(sameSizeCtr++ > 5000000){
+                _bg.log('Size Limit Reached: EXITTING');
+                break;
+              }
+              
+              continue;
+            } else {
+              currSize = _bg._loadedBlundleQueue.length;
+              _bg.log('Array Size is Now: ' + currSize);
+            }
+          }
+          _bg.log('Array loaded from ' + $(category).val());
+        
+        });
+      }
       _bg._blundleCategories = $('#blundle_categories').html();
       //_bg.log('blundle cat: ' + $('#blundle_categories').html());
       //reinstating previous category state
       if(_bg._popupMountedBlundleCategoryState != ''){
         $('#blundle_categories').val(_bg._popupMountedBlundleCategoryState); 
         
-      }
-      
-      if(!isReload) {
-        _bg.emptyLoadedBlundleArray();
-        //populating blundle queue
-        $('#blundle_categories option').each(function(index, category){
-          //_bg.log('cat index ' + index + ' search id: ' + $(category).val());
-          _bg.traverseTreeV3(_bg.window.rootTree, _bg._loadedBlundleQueue, $(category).val(), false);
-          
-          });
       }
       
       _bg.log('length of queue: after traversial' + _bg._loadedBlundleQueue.length);
@@ -286,9 +322,9 @@ $(function(){
           _bg._popupMountedBlundleCategoryState = $('#blundle_categories option:selected').val();
           var links = filterLinksInQueue(_bg._loadedBlundleQueue, $('#blundle_categories option:selected').val());
           $('#loaded_blundle_linqs').html(links);
-          _bg.log('option.text: ' + $('#blundle_categories option:selected').val());
+          //_bg.log('option.text: ' + $('#blundle_categories option:selected').val());
           updateExistingBlundleLinkSubfolder($('#blundle_categories option:selected').val());
-          _bg.log('option.text: ' + option.text);
+          //_bg.log('option.text: ' + option.text);
           $('.blundle_subfolder_div').html('<select class="blundle_categories"></select>');
           
           $('.blundle_subfolder_div').find('select').html(option.text);
@@ -304,6 +340,7 @@ $(function(){
             
           });
           
+        //TOGGLE HIDE/SHOW OF CURRENT LINQS  
         $('#show_current_queue').click(function(){
             //style="border:1px solid black;"
             if($('#show_current_queue').hasClass('show_current')){
@@ -330,10 +367,11 @@ $(function(){
           _bg.log('pin clicked');
           var url = $(this).attr('id');
           url =  url.replace('_pin', '');
-          if(_bg.togglePin(url) == true) {
-            $(this).toggleClass('pinned', true);
+          //_bg.log('blunde toggle: ' + _bg.toggleBlundlePin(url));
+          if(_bg.togglePin(url) == true | _bg.toggleBlundlePin(url)) {
+            $(this).toggleClass('pinned');
           } else{
-            $(this).toggleClass('pinned', false);
+            $(this).toggleClass('pinned');
           }
         });
 
@@ -416,14 +454,9 @@ $(function(){
                   });
                 
               }
-                
-            
+
             });
-            
-            
-            //get root id
-            //for each index in categories array, create subfolder under root
-          
+
           });
     
         //switches back to bundle edit mode
@@ -552,8 +585,28 @@ $(function(){
               _bg.log('Size: ' + _bg._loadedBlundleQueue.length +' New Size: ' + 
                 _bg._loadedBlundleQueue.push({'title' : node.title, 'url' : node.url, 'id' : node.id, 'parentId' : node.parentId , 'pinned' : false, 'subfolder' : node.parentId})
               );
+              _bg.createBookmarkTreeSelect();
               setupMountedBlundleState(_bg._popupMountedBlundleState, true);//reload blundle modification interface
               }
+				});
+			}
+		}
+    
+	});	
+  
+  $('button#remove_pinned_links').click(function(e){
+		var mark = null;
+		var queue = _bg._loadedBlundleQueue;
+    _bg.log('Removal Clicked');
+		for(var i = 0; i <= queue.length; i++){
+			mark = queue[i];
+      _bg.log('pinned: ' + mark.pinned);
+			if(mark.pinned == true){
+        _bg.log('Removing ' + mark.title + ' from blundle. Id is ' + mark.id);
+				chrome.bookmarks.remove( mark.id , function(){
+          _bg.removeFromBlundle(queue[i].url); 
+          setupMountedBlundleState(_bg._popupMountedBlundleState, true);//reload blundle modification interface
+      
 				});
 			}
 		}
