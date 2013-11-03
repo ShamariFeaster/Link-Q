@@ -597,14 +597,17 @@ $(function(){
   $('button#remove_pinned_links').click(function(e){
 		var mark = null;
 		var queue = _bg._loadedBlundleQueue;
+    var url = '';
     _bg.log('Removal Clicked');
 		for(var i = 0; i <= queue.length; i++){
 			mark = queue[i];
+      url = queue[i].url;
       _bg.log('pinned: ' + mark.pinned);
 			if(mark.pinned == true){
         _bg.log('Removing ' + mark.title + ' from blundle. Id is ' + mark.id);
 				chrome.bookmarks.remove( mark.id , function(){
-          _bg.removeFromBlundle(queue[i].url); 
+          _bg.removeFromBlundle(url); 
+          _bg.createBookmarkTreeSelect();
           setupMountedBlundleState(_bg._popupMountedBlundleState, true);//reload blundle modification interface
       
 				});
